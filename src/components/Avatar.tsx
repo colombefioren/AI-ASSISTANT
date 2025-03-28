@@ -40,7 +40,7 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
       "camera",
       0, // alpha (horizontal rotation)
       Math.PI / 2, // beta (vertical rotation)
-      0.8, // radius (distance from target)
+      0.3, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
@@ -114,6 +114,94 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
             mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Slightly larger
             mesh.position = new BABYLON.Vector3(0, -1.4, 0); // Slightly lower
             mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Face forward
+
+            // Try to adjust skeleton for a rest position
+            if (mesh.skeleton) {
+              // Find and adjust arm bones
+              const leftArmBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("left") &&
+                  (bone.name.toLowerCase().includes("arm") ||
+                    bone.name.toLowerCase().includes("shoulder"))
+              );
+              const rightArmBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("right") &&
+                  (bone.name.toLowerCase().includes("arm") ||
+                    bone.name.toLowerCase().includes("shoulder"))
+              );
+
+              // Adjust left arm - bring it down from T-pose
+              leftArmBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(45) // More inward rotation to bring arm down
+                );
+              });
+
+              // Adjust right arm - bring it down from T-pose
+              rightArmBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(-45) // More inward rotation to bring arm down
+                );
+              });
+
+              // Find and adjust leg bones
+              const leftLegBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("left") &&
+                  (bone.name.toLowerCase().includes("leg") ||
+                    bone.name.toLowerCase().includes("hip"))
+              );
+              const rightLegBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("right") &&
+                  (bone.name.toLowerCase().includes("leg") ||
+                    bone.name.toLowerCase().includes("hip"))
+              );
+
+              // Adjust legs slightly
+              leftLegBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(5) // Slight inward rotation
+                );
+              });
+
+              rightLegBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(-5) // Slight inward rotation
+                );
+              });
+
+              // Find and adjust spine bones for a more natural posture
+              const spineBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("spine") ||
+                  bone.name.toLowerCase().includes("pelvis")
+              );
+
+              // Adjust spine for a more natural posture
+              spineBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(5), // Slight forward tilt
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0) // No side tilt
+                );
+              });
+
+              // Log all bones for debugging
+              console.log(
+                "All bones:",
+                mesh.skeleton.bones.map((bone) => bone.name)
+              );
+            }
 
             // Try to find and play any available animations
             if (mesh.animations && mesh.animations.length > 0) {
