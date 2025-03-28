@@ -10,15 +10,23 @@
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
+    "@babylonjs/core": "^8.0.1",
+    "@babylonjs/gui": "^8.0.1",
+    "@babylonjs/loaders": "^8.0.1",
+    "@babylonjs/materials": "^8.0.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@react-three/drei": "^10.0.5",
+    "@react-three/fiber": "^9.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "leva": "^0.10.0",
     "lucide-react": "^0.468.0",
     "next": "15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.175.0"
   },
   "devDependencies": {
     "@types/node": "^20",
