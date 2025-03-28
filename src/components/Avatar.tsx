@@ -38,9 +38,9 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
     // Camera setup
     const camera = new BABYLON.ArcRotateCamera(
       "camera",
-      Math.PI / 2,
-      Math.PI / 2,
-      0.2,
+      0, // alpha (horizontal rotation)
+      Math.PI / 2, // beta (vertical rotation)
+      2, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
@@ -67,32 +67,51 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
           if (mesh.morphTargetManager) {
             morphTargetManagerRef.current = mesh.morphTargetManager;
 
+            // Log all available morph targets
+            console.log("All available morph targets:");
+            for (let i = 0; i < mesh.morphTargetManager.numTargets; i++) {
+              const target = mesh.morphTargetManager.getTarget(i);
+              console.log(`Target ${i}: ${target.name}`);
+            }
+
             // Find and store eye targets
             leftEyeRef.current = findMorphTarget([
-              "blink_L",
+              "eyeBlinkLeft",
               "eyeBlink_L",
-              "left_eye",
+              "blinkLeft",
+              "blink_L",
               "leftEyeClose",
+              "eyeCloseLeft",
+              "eyeClose_L",
             ]);
             rightEyeRef.current = findMorphTarget([
-              "blink_R",
+              "eyeBlinkRight",
               "eyeBlink_R",
-              "right_eye",
+              "blinkRight",
+              "blink_R",
               "rightEyeClose",
+              "eyeCloseRight",
+              "eyeClose_R",
             ]);
             bothEyesRef.current = findMorphTarget([
+              "eyeBlink",
               "blink",
+              "eyeClose",
+              "eyesClose",
               "eye_close",
               "eyes_close",
             ]);
 
-            console.log("Eye Targets:", {
+            console.log("Found Eye Targets:", {
               left: leftEyeRef.current?.name,
               right: rightEyeRef.current?.name,
               both: bothEyesRef.current?.name,
             });
-            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Example scale (increase size by 1.5x)
-            mesh.position.y = -0.9;
+
+            // Adjust model position and scale
+            mesh.scaling = new BABYLON.Vector3(1, 1, 1); // Reset to default scale
+            mesh.position = new BABYLON.Vector3(0, 0, 0); // Reset position
+            mesh.rotation = new BABYLON.Vector3(0, 0, 0); // Reset rotation
 
             startBlinking();
           }
