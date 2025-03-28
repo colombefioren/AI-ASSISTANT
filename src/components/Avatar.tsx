@@ -40,13 +40,14 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
       "camera",
       0, // alpha (horizontal rotation)
       Math.PI / 2, // beta (vertical rotation)
-      2, // radius (distance from target)
+      0.8, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
     camera.attachControl(canvasRef.current, true);
     camera.lowerBetaLimit = Math.PI / 3;
     camera.upperBetaLimit = Math.PI / 1.7;
+    camera.fov = 0.2; // Reduce FOV for a more zoomed in look
 
     // Lighting
     new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
@@ -57,6 +58,7 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
     );
     directionalLight.intensity = 0.8;
 
+    // Load the model
     BABYLON.SceneLoader.ImportMesh(
       "",
       "https://models.readyplayer.me/",
@@ -109,9 +111,28 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
             });
 
             // Adjust model position and scale
-            mesh.scaling = new BABYLON.Vector3(1, 1, 1); // Reset to default scale
-            mesh.position = new BABYLON.Vector3(0, 0, 0); // Reset position
-            mesh.rotation = new BABYLON.Vector3(0, 0, 0); // Reset rotation
+            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Slightly larger
+            mesh.position = new BABYLON.Vector3(0, -1.4, 0); // Slightly lower
+            mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Face forward
+
+            // Try to find and play any available animations
+            if (mesh.animations && mesh.animations.length > 0) {
+              console.log(
+                "Available animations:",
+                mesh.animations.map((a) => a.name)
+              );
+              const idleAnimation = mesh.animations.find(
+                (a) =>
+                  a.name.toLowerCase().includes("idle") ||
+                  a.name.toLowerCase().includes("standing") ||
+                  a.name.toLowerCase().includes("pose")
+              );
+
+              if (idleAnimation) {
+                console.log("Playing idle animation:", idleAnimation.name);
+                scene.beginAnimation(mesh, 0, 100, true);
+              }
+            }
 
             startBlinking();
           }
