@@ -14,7 +14,9 @@
     "@babylonjs/gui": "^8.0.1",
     "@babylonjs/loaders": "^8.0.1",
     "@babylonjs/materials": "^8.0.1",
+    "@headlessui/react": "^2.2.0",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.8",
     "@react-three/drei": "^10.0.5",
     "@react-three/fiber": "^9.1.0",
     "class-variance-authority": "^0.7.1",
@@ -24,6 +26,7 @@
     "next": "15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-tooltip": "^5.28.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.175.0"

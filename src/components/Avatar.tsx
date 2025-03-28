@@ -109,8 +109,8 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
             });
 
             // Adjust model position and scale
-            mesh.scaling = new BABYLON.Vector3(1, 1, 1); // Reset to default scale
-            mesh.position = new BABYLON.Vector3(0, 0, 0); // Reset position
+            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Reset to default scale
+            mesh.position.y = -0.8;
             mesh.rotation = new BABYLON.Vector3(0, 0, 0); // Reset rotation
 
             startBlinking();
