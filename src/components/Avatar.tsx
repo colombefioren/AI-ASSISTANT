@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as BABYLON from "@babylonjs/core";
 import "@babylonjs/loaders";
 
@@ -11,15 +11,21 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
   const mouthAnimationRef = useRef<number | null>(null);
   const blinkAnimationRef = useRef<number | null>(null);
 
+  // Animation parameters
   const MOUTH_CLOSED = 0;
   const MOUTH_OPEN = 0.7;
   const MOUTH_SPEAK_SPEED = 300;
 
-  const BLINK_INTERVAL_MIN = 3000; // Minimum time between blinks (ms)
-  const BLINK_INTERVAL_MAX = 8000; // Maximum time between blinks (ms)
-  const BLINK_DURATION = 200; // Duration of a blink (ms)
+  const BLINK_INTERVAL_MIN = 2000;
+  const BLINK_INTERVAL_MAX = 5000;
+  const BLINK_DURATION = 150;
   const EYES_OPEN = 0;
   const EYES_CLOSED = 1;
+
+  // Store eye targets
+  const leftEyeRef = useRef<BABYLON.MorphTarget | null>(null);
+  const rightEyeRef = useRef<BABYLON.MorphTarget | null>(null);
+  const bothEyesRef = useRef<BABYLON.MorphTarget | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -27,7 +33,6 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
     const engine = new BABYLON.Engine(canvasRef.current, true);
     const scene = new BABYLON.Scene(engine);
     sceneRef.current = scene;
-
     scene.clearColor = BABYLON.Color4.FromHexString("#FFF");
 
     // Camera setup
@@ -39,7 +44,6 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
-
     camera.attachControl(canvasRef.current, true);
     camera.lowerBetaLimit = Math.PI / 3;
     camera.upperBetaLimit = Math.PI / 1.7;
@@ -58,178 +62,172 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
       "https://models.readyplayer.me/",
       "67e6d3bd1dcd1166600ef5b7.glb",
       scene,
-      (meshes, particleSystems, skeletons) => {
-        if (skeletons.length > 0) {
-          const skeleton = skeletons[0];
+      (meshes) => {
+        meshes.forEach((mesh) => {
+          if (mesh.morphTargetManager) {
+            morphTargetManagerRef.current = mesh.morphTargetManager;
 
-          // Find the morph target manager
-          meshes.forEach((mesh) => {
-            if (mesh.morphTargetManager) {
-              morphTargetManagerRef.current = mesh.morphTargetManager;
+            // Find and store eye targets
+            leftEyeRef.current = findMorphTarget([
+              "blink_L",
+              "eyeBlink_L",
+              "left_eye",
+              "leftEyeClose",
+            ]);
+            rightEyeRef.current = findMorphTarget([
+              "blink_R",
+              "eyeBlink_R",
+              "right_eye",
+              "rightEyeClose",
+            ]);
+            bothEyesRef.current = findMorphTarget([
+              "blink",
+              "eye_close",
+              "eyes_close",
+            ]);
 
-              // Get morph targets using the official API
-              const targetCount = mesh.morphTargetManager.numTargets;
-              const targets = [];
-              for (let i = 0; i < targetCount; i++) {
-                const target = mesh.morphTargetManager.getTarget(i);
-                targets.push(target);
-              }
+            console.log("Eye Targets:", {
+              left: leftEyeRef.current?.name,
+              right: rightEyeRef.current?.name,
+              both: bothEyesRef.current?.name,
+            });
+            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Example scale (increase size by 1.5x)
+            mesh.position.y = -0.9;
 
-              console.log(
-                "Morph Targets:",
-                targets.map((t) => t.name)
-              );
-
-              mesh.scaling = new BABYLON.Vector3(1.5, 1.5, 1.5); // Example scale (increase size by 1.5x)
-              mesh.position.y = -0.65;
-
-              // Start blinking animation once model is loaded
-              startBlinking();
-            }
-          });
-        }
+            startBlinking();
+          }
+        });
       }
     );
 
-    engine.runRenderLoop(() => {
-      scene.render();
-    });
-
+    engine.runRenderLoop(() => scene.render());
     window.addEventListener("resize", () => engine.resize());
 
     return () => {
-      if (mouthAnimationRef.current) {
+      if (mouthAnimationRef.current)
         cancelAnimationFrame(mouthAnimationRef.current);
-      }
-      if (blinkAnimationRef.current) {
+      if (blinkAnimationRef.current)
         cancelAnimationFrame(blinkAnimationRef.current);
-      }
       engine.dispose();
     };
   }, []);
 
-  // Mouth animation
   useEffect(() => {
     if (!morphTargetManagerRef.current) return;
 
-    // Cancel any existing mouth animation
-    if (mouthAnimationRef.current) {
-      cancelAnimationFrame(mouthAnimationRef.current);
-    }
+    const mouthTarget = findMorphTarget(["mouth", "viseme"]);
+    if (!mouthTarget) return;
 
     const animateMouth = () => {
-      if (!isSpeaking) {
-        // Reset mouth to closed when not speaking
-        const mouthTarget = findMorphTarget(["mouth", "viseme"]);
-        if (mouthTarget) {
-          mouthTarget.influence = MOUTH_CLOSED;
-        }
-        return;
-      }
-
       const startTime = Date.now();
-      const duration = MOUTH_SPEAK_SPEED;
 
-      const step = () => {
+      const animate = () => {
         if (!isSpeaking) {
-          const mouthTarget = findMorphTarget(["mouth", "viseme"]);
-          if (mouthTarget) {
-            mouthTarget.influence = MOUTH_CLOSED;
-          }
+          mouthTarget.influence = MOUTH_CLOSED;
           return;
         }
 
         const elapsed = Date.now() - startTime;
         const openness =
           MOUTH_CLOSED +
-          Math.abs(Math.sin((elapsed / duration) * Math.PI)) *
+          Math.abs(Math.sin((elapsed / MOUTH_SPEAK_SPEED) * Math.PI)) *
             (MOUTH_OPEN - MOUTH_CLOSED);
 
-        const mouthTarget = findMorphTarget(["mouth", "viseme"]);
-        if (mouthTarget) {
-          mouthTarget.influence = openness;
-        }
-
-        mouthAnimationRef.current = requestAnimationFrame(step);
+        mouthTarget.influence = openness;
+        mouthAnimationRef.current = requestAnimationFrame(animate);
       };
 
-      mouthAnimationRef.current = requestAnimationFrame(step);
+      mouthAnimationRef.current = requestAnimationFrame(animate);
     };
 
+    if (mouthAnimationRef.current)
+      cancelAnimationFrame(mouthAnimationRef.current);
     animateMouth();
 
     return () => {
-      if (mouthAnimationRef.current) {
+      if (mouthAnimationRef.current)
         cancelAnimationFrame(mouthAnimationRef.current);
-      }
     };
   }, [isSpeaking]);
 
-  // Helper function to find morph targets by name
-  // Helper function to find morph targets by name with proper typing
   const findMorphTarget = (keywords: string[]): BABYLON.MorphTarget | null => {
     if (!morphTargetManagerRef.current) return null;
 
-    // Use the official API to get targets
     const targetCount = morphTargetManagerRef.current.numTargets;
-
     for (let i = 0; i < targetCount; i++) {
       const target = morphTargetManagerRef.current.getTarget(i);
       if (
-        keywords.some((keyword) =>
-          target.name.toLowerCase().includes(keyword.toLowerCase())
+        target.name &&
+        keywords.some((k) =>
+          target.name.toLowerCase().includes(k.toLowerCase())
         )
       ) {
         return target;
       }
     }
-
     return null;
   };
 
-  // Blinking animation
   const startBlinking = () => {
     const blink = () => {
       const blinkStartTime = Date.now();
-      const eyesTarget = findMorphTarget(["blink", "eye"]);
 
-      if (!eyesTarget) return;
-
-      const blinkStep = () => {
+      const animateBlink = () => {
         const elapsed = Date.now() - blinkStartTime;
+        const progress = Math.min(elapsed / BLINK_DURATION, 1);
+
+        // Smooth easing function
+        const ease = (t: number) =>
+          t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
         if (elapsed < BLINK_DURATION) {
           // Closing eyes
-          const progress = elapsed / BLINK_DURATION;
-          eyesTarget.influence =
-            EYES_OPEN + (EYES_CLOSED - EYES_OPEN) * progress;
-          blinkAnimationRef.current = requestAnimationFrame(blinkStep);
+          const closeProgress = ease(progress);
+          const influence =
+            EYES_OPEN + (EYES_CLOSED - EYES_OPEN) * closeProgress;
+
+          if (leftEyeRef.current) leftEyeRef.current.influence = influence;
+          if (rightEyeRef.current) rightEyeRef.current.influence = influence;
+          if (bothEyesRef.current) bothEyesRef.current.influence = influence;
+
+          blinkAnimationRef.current = requestAnimationFrame(animateBlink);
         } else if (elapsed < BLINK_DURATION * 2) {
           // Opening eyes
-          const progress = (elapsed - BLINK_DURATION) / BLINK_DURATION;
-          eyesTarget.influence =
-            EYES_CLOSED - (EYES_CLOSED - EYES_OPEN) * progress;
-          blinkAnimationRef.current = requestAnimationFrame(blinkStep);
+          const openProgress = ease(
+            (elapsed - BLINK_DURATION) / BLINK_DURATION
+          );
+          const influence =
+            EYES_CLOSED - (EYES_CLOSED - EYES_OPEN) * openProgress;
+
+          if (leftEyeRef.current) leftEyeRef.current.influence = influence;
+          if (rightEyeRef.current) rightEyeRef.current.influence = influence;
+          if (bothEyesRef.current) bothEyesRef.current.influence = influence;
+
+          blinkAnimationRef.current = requestAnimationFrame(animateBlink);
         } else {
-          // Blink complete, schedule next blink
-          eyesTarget.influence = EYES_OPEN;
+          // Blink complete - reset to open
+          if (leftEyeRef.current) leftEyeRef.current.influence = EYES_OPEN;
+          if (rightEyeRef.current) rightEyeRef.current.influence = EYES_OPEN;
+          if (bothEyesRef.current) bothEyesRef.current.influence = EYES_OPEN;
+
+          // Schedule next blink
           const nextBlink =
             BLINK_INTERVAL_MIN +
             Math.random() * (BLINK_INTERVAL_MAX - BLINK_INTERVAL_MIN);
+
           setTimeout(() => {
             blinkAnimationRef.current = requestAnimationFrame(blink);
           }, nextBlink);
         }
       };
 
-      blinkAnimationRef.current = requestAnimationFrame(blinkStep);
+      blinkAnimationRef.current = requestAnimationFrame(animateBlink);
     };
 
-    // Start the first blink after a random delay
-    const firstBlinkDelay = 1000 + Math.random() * 2000;
+    // Start first blink after delay
     setTimeout(() => {
       blinkAnimationRef.current = requestAnimationFrame(blink);
-    }, firstBlinkDelay);
+    }, 1000 + Math.random() * 1000);
   };
 
   return (
