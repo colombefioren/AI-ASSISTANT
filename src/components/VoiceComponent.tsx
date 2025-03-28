@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from "react";
 import { useConversation } from "@11labs/react";
@@ -76,68 +76,69 @@ const VoiceChat = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          Voice Chat
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleMute}
-              disabled={status !== "connected"}
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4" />
+    <div className="bg-red-400 flex items-center gap-[3vw] h-[100dvh]">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Your AI Interviewer
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleMute}
+                disabled={status !== "connected"}
+              >
+                {isMuted ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              {status === "connected" ? (
+                <Button
+                  variant="destructive"
+                  onClick={handleEndConversation}
+                  className="w-full"
+                >
+                  <MicOff className="mr-2 h-4 w-4" />
+                  End
+                </Button>
               ) : (
-                <Volume2 className="h-4 w-4" />
+                <Button
+                  onClick={handleStartConversation}
+                  disabled={!hasPermission}
+                  className="w-full"
+                >
+                  <Mic className="mr-2 h-4 w-4" />
+                  Start the interview
+                </Button>
               )}
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            {status === "connected" ? (
-              <Button
-                variant="destructive"
-                onClick={handleEndConversation}
-                className="w-full"
-              >
-                <MicOff className="mr-2 h-4 w-4" />
-                End Conversation
-              </Button>
-            ) : (
-              <Button
-                onClick={handleStartConversation}
-                disabled={!hasPermission}
-                className="w-full"
-              >
-                <Mic className="mr-2 h-4 w-4" />
-                Start Conversation
-              </Button>
-            )}
-          </div>
+            </div>
 
-          <div className="text-center text-sm">
-            {status === "connected" && (
-              <p className="text-green-600">
-                {isSpeaking ? "Agent is speaking..." : "Listening..."}
-              </p>
-            )}
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-            {!hasPermission && (
-              <p className="text-yellow-600">
-                Please allow microphone access to use voice chat
-              </p>
-            )}
+            <div className="text-center text-sm">
+              {status === "connected" && (
+                <p className="text-green-600">
+                  {isSpeaking ? "Agent is speaking..." : "Listening..."}
+                </p>
+              )}
+              {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+              {!hasPermission && (
+                <p className="text-yellow-600">
+                  Please allow microphone access to use voice chat
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-        {/* Pass isSpeaking to Avatar3D */}
-        <Avatar3D isSpeaking={isSpeaking} />
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <Avatar3D isSpeaking={isSpeaking} />
+    </div>
   );
 };
 
