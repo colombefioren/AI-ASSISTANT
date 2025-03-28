@@ -1,14 +1,11 @@
-"use client";
+"use client"
 
 import React, { useEffect, useState } from "react";
-
-// ElevenLabs
 import { useConversation } from "@11labs/react";
-
-// UI
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import Avatar3D from "../components/Avatar"; // Import Avatar3D component
 
 const VoiceChat = () => {
   const [hasPermission, setHasPermission] = useState(false);
@@ -34,7 +31,6 @@ const VoiceChat = () => {
   const { status, isSpeaking } = conversation;
 
   useEffect(() => {
-    // Request microphone permission on component mount
     const requestMicPermission = async () => {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -138,6 +134,8 @@ const VoiceChat = () => {
             )}
           </div>
         </div>
+        {/* Pass isSpeaking to Avatar3D */}
+        <Avatar3D isSpeaking={isSpeaking} />
       </CardContent>
     </Card>
   );
