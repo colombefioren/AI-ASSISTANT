@@ -44,16 +44,87 @@ const AvatarMale = ({
     // Camera setup
     const camera = new BABYLON.ArcRotateCamera(
       "camera",
-      0, // alpha (horizontal rotation)
-      Math.PI / 2, // beta (vertical rotation)
-      0.8, // radius (distance from target)
-      new BABYLON.Vector3(0, 1.65, 0),
+      -1.5848765667104545, // alpha (horizontal rotation)
+      1.5428052247295043, // beta (vertical rotation)
+      4.430714824894188, // radius (distance from target)
+      new BABYLON.Vector3(
+        -0.00004733830817540681,
+        1.5326236271686828,
+        -0.0033618162692242606
+      ),
       scene
     );
+
+    // Add camera debugging
+    camera.onViewMatrixChangedObservable.add(() => {
+      console.log("Camera State:", {
+        position: {
+          x: camera.position.x,
+          y: camera.position.y,
+          z: camera.position.z,
+        },
+        target: {
+          x: camera.target.x,
+          y: camera.target.y,
+          z: camera.target.z,
+        },
+        alpha: camera.alpha,
+        beta: camera.beta,
+        radius: camera.radius,
+        fov: camera.fov,
+      });
+    });
+
+    // Debug pointer events
+    scene.onPointerObservable.add((pointerInfo) => {
+      if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+        console.log("Pointer Down:", {
+          event: pointerInfo.event,
+          cameraPosition: camera.position,
+          cameraTarget: camera.target,
+        });
+      }
+      if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+        console.log("Pointer Up:", {
+          event: pointerInfo.event,
+          cameraPosition: camera.position,
+          cameraTarget: camera.target,
+        });
+      }
+    });
+
+    // Debug wheel events for zoom
+    scene.onPrePointerObservable.add((pointerInfo) => {
+      if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERWHEEL) {
+        console.log("Wheel Event:", {
+          delta: (pointerInfo.event as WheelEvent).deltaY,
+          currentRadius: camera.radius,
+        });
+      }
+    });
+
+    // Log initial camera state
+    console.log("Initial Camera State:", {
+      position: {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z,
+      },
+      target: {
+        x: camera.target.x,
+        y: camera.target.y,
+        z: camera.target.z,
+      },
+      alpha: camera.alpha,
+      beta: camera.beta,
+      radius: camera.radius,
+      fov: camera.fov,
+    });
+
     camera.attachControl(canvasRef.current, true);
-    camera.lowerBetaLimit = Math.PI / 3;
-    camera.upperBetaLimit = Math.PI / 1.7;
-    camera.fov = 0.2; // Reduce FOV for a more zoomed in look
+    camera.lowerBetaLimit = 1.0471975511965976;
+    camera.upperBetaLimit = 1.8479956785822313;
+    camera.fov = 0.2;
 
     // Lighting
     new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
