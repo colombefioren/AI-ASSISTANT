@@ -25,7 +25,7 @@ export default function Home() {
       const hideTimer = setTimeout(() => {
         setShowBubble(false);
         setHasShown(true);
-      }, 5000);
+      }, 8000);
 
       return () => {
         clearTimeout(showTimer);
