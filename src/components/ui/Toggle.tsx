@@ -23,7 +23,7 @@ const Toggle = ({
         checked={enabled}
         onChange={setEnabled}
         className={`relative inline-flex h-8 w-16 items-center rounded-full transition bg-gray-300 dark:bg-gray-700 p-1 duration-300 ease-in-out ${
-          enabled ? "bg-blue-500" : "bg-gray-400"
+          enabled ? "bg-blue-400" : "bg-gray-400"
         }`}
       >
         <span
