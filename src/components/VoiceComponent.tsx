@@ -1,4 +1,3 @@
-// VoiceComponent.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,7 +5,7 @@ import { useConversation } from "@11labs/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
-import Avatar3D from "./AvatarFemale";
+import { motion, AnimatePresence } from "framer-motion";
 import AvatarFemale from "./AvatarFemale";
 import AvatarMale from "./AvatarMale";
 
@@ -15,6 +14,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isHovered, setIsHovered] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(true);
 
   const conversation = useConversation({
     onConnect: () => {
@@ -25,6 +25,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
     },
     onMessage: (message) => {
       console.log("Received message:", message);
+      setShowGreeting(false); // Hide greeting when first message arrives
     },
     onError: (error: string | Error) => {
       setErrorMessage(typeof error === "string" ? error : error.message);
@@ -46,6 +47,13 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
     };
 
     requestMicPermission();
+
+    // Auto-hide greeting after 5 seconds if no message arrives
+    const timer = setTimeout(() => {
+      setShowGreeting(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleStartConversation = async () => {
@@ -96,6 +104,26 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
           </>
         )}
       </div>
+
+      {/* Greeting Speech Bubble */}
+      <AnimatePresence>
+        {showGreeting && status === "connected" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-[25%] left-1/2 transform -translate-x-1/2 z-20"
+          >
+            <div className="relative bg-white rounded-xl p-4 shadow-lg max-w-xs sm:max-w-sm">
+              <div className="text-slate-800 font-medium">
+                Hello! Let's start your interview.
+              </div>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45"></div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Card className="max-w-md mx-auto z-10 bg-slate-800/70 backdrop-blur-sm border-slate-700/50 shadow-xl transition-all duration-500 transform hover:scale-[1.01] hover:shadow-2xl w-[40vw]">
         <CardHeader>
