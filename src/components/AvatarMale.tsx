@@ -46,13 +46,14 @@ const AvatarMale = ({
       "camera",
       0, // alpha (horizontal rotation)
       Math.PI / 2, // beta (vertical rotation)
-      2, // radius (distance from target)
+      0.3, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
     camera.attachControl(canvasRef.current, true);
     camera.lowerBetaLimit = Math.PI / 3;
     camera.upperBetaLimit = Math.PI / 1.7;
+    camera.fov = 0.2; // Reduce FOV for a more zoomed in look
 
     // Lighting
     new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
@@ -63,6 +64,7 @@ const AvatarMale = ({
     );
     directionalLight.intensity = 0.8;
 
+    // Load the model
     BABYLON.SceneLoader.ImportMesh(
       "",
       "https://models.readyplayer.me/",
@@ -115,9 +117,117 @@ const AvatarMale = ({
             });
 
             // Adjust model position and scale
-            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Reset to default scale
-            mesh.position.y = -1.0;
-            mesh.rotation = new BABYLON.Vector3(0, 0, 0); // Reset rotation
+
+            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Slightly larger
+            mesh.position = new BABYLON.Vector3(0, -1.4, 0); // Slightly lower
+            mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Face forward
+
+            // Try to adjust skeleton for a rest position
+            if (mesh.skeleton) {
+              // Find and adjust arm bones
+              const leftArmBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("left") &&
+                  (bone.name.toLowerCase().includes("arm") ||
+                    bone.name.toLowerCase().includes("shoulder"))
+              );
+              const rightArmBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("right") &&
+                  (bone.name.toLowerCase().includes("arm") ||
+                    bone.name.toLowerCase().includes("shoulder"))
+              );
+
+              // Adjust left arm - bring it down from T-pose
+              leftArmBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(45) // More inward rotation to bring arm down
+                );
+              });
+
+              // Adjust right arm - bring it down from T-pose
+              rightArmBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(-45) // More inward rotation to bring arm down
+                );
+              });
+
+              // Find and adjust leg bones
+              const leftLegBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("left") &&
+                  (bone.name.toLowerCase().includes("leg") ||
+                    bone.name.toLowerCase().includes("hip"))
+              );
+              const rightLegBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("right") &&
+                  (bone.name.toLowerCase().includes("leg") ||
+                    bone.name.toLowerCase().includes("hip"))
+              );
+
+              // Adjust legs slightly
+              leftLegBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(5) // Slight inward rotation
+                );
+              });
+
+              rightLegBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(-5) // Slight inward rotation
+                );
+              });
+
+              // Find and adjust spine bones for a more natural posture
+              const spineBones = mesh.skeleton.bones.filter(
+                (bone) =>
+                  bone.name.toLowerCase().includes("spine") ||
+                  bone.name.toLowerCase().includes("pelvis")
+              );
+
+              // Adjust spine for a more natural posture
+              spineBones.forEach((bone) => {
+                bone.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(5), // Slight forward tilt
+                  BABYLON.Tools.ToRadians(0), // No rotation
+                  BABYLON.Tools.ToRadians(0) // No side tilt
+                );
+              });
+
+              // Log all bones for debugging
+              console.log(
+                "All bones:",
+                mesh.skeleton.bones.map((bone) => bone.name)
+              );
+            }
+
+            // Try to find and play any available animations
+            if (mesh.animations && mesh.animations.length > 0) {
+              console.log(
+                "Available animations:",
+                mesh.animations.map((a) => a.name)
+              );
+              const idleAnimation = mesh.animations.find(
+                (a) =>
+                  a.name.toLowerCase().includes("idle") ||
+                  a.name.toLowerCase().includes("standing") ||
+                  a.name.toLowerCase().includes("pose")
+              );
+
+              if (idleAnimation) {
+                console.log("Playing idle animation:", idleAnimation.name);
+                scene.beginAnimation(mesh, 0, 100, true);
+              }
+            }
 
             startBlinking();
           }
