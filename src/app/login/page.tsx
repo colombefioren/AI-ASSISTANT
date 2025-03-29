@@ -23,9 +23,25 @@ type NotificationType = {
 };
 
 const checkUserExists = async (email: string): Promise<boolean> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  const existingUsers = ["test@example.com", "user@demo.com"];
-  return existingUsers.includes(email);
+  try {
+    const response = await fetch("/api/auth/check-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to check email");
+    }
+
+    const data = await response.json();
+    return data.exists;
+  } catch (error) {
+    console.error("Error checking email:", error);
+    return false;
+  }
 };
 
 const LoginForm = () => {
