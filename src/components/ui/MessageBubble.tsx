@@ -14,7 +14,7 @@ const MessageBubble = ({ show }: { show: boolean }) => {
             stiffness: 100,
             duration: 0.5,
           }}
-          className="absolute flex items-center gap-3 z-[100] top-[5rem] right-[650px] bg-[#ececec] py-8 px-10 rounded-full rounded-br-none text-slate-700 shadow-lg"
+          className="absolute flex items-center gap-3 z-[100] top-[6rem] right-[600px] bg-[#ececec] py-8 px-10 rounded-full rounded-br-none text-slate-700 shadow-lg"
         >
           Hi there! Let's start your interview.
         </motion.div>
