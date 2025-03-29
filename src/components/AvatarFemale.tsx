@@ -4,7 +4,13 @@ import { useEffect, useRef } from "react";
 import * as BABYLON from "@babylonjs/core";
 import "@babylonjs/loaders";
 
-const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
+const AvatarFemale = ({
+  isSpeaking,
+  gender,
+}: {
+  isSpeaking: boolean;
+  gender: boolean;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<BABYLON.Scene | null>(null);
   const morphTargetManagerRef = useRef<BABYLON.MorphTargetManager | null>(null);
@@ -60,7 +66,7 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
     BABYLON.SceneLoader.ImportMesh(
       "",
       "https://models.readyplayer.me/",
-      "67e6d3bd1dcd1166600ef5b7.glb",
+      "67e73741ce4c867ff25ab0aa.glb",
       scene,
       (meshes) => {
         meshes.forEach((mesh) => {
@@ -276,4 +282,4 @@ const Avatar3D = ({ isSpeaking }: { isSpeaking: boolean }) => {
   );
 };
 
-export default Avatar3D;
+export default AvatarFemale;

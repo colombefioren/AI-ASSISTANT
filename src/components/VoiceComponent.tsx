@@ -6,9 +6,11 @@ import { useConversation } from "@11labs/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
-import Avatar3D from "../components/Avatar";
+import Avatar3D from "./AvatarFemale";
+import AvatarFemale from "./AvatarFemale";
+import AvatarMale from "./AvatarMale";
 
-const VoiceChat = () => {
+const VoiceChat = ({ gender }: { gender: boolean }) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -49,7 +51,7 @@ const VoiceChat = () => {
   const handleStartConversation = async () => {
     try {
       const conversationId = await conversation.startSession({
-        agentId: "zEMF3122dPrA9bMvf0Wl",
+        agentId: gender ? "dqte1WRSWX3A2bDNwJt5" : "zEMF3122dPrA9bMvf0Wl",
       });
       console.log("Started conversation:", conversationId);
     } catch (error) {
@@ -83,11 +85,14 @@ const VoiceChat = () => {
       <div className="absolute inset-0 overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-95" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sky-500/5 via-transparent to-transparent" />
-        
+
         {isSpeaking && (
           <>
             <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] rounded-full bg-sky-500/10 filter blur-3xl -translate-x-1/2 -translate-y-1/2 animate-pulse" />
-            <div className="absolute top-1/2 left-1/2 w-[200px] h-[200px] rounded-full bg-sky-400/15 filter blur-2xl -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div
+              className="absolute top-1/2 left-1/2 w-[200px] h-[200px] rounded-full bg-sky-400/15 filter blur-2xl -translate-x-1/2 -translate-y-1/2 animate-pulse"
+              style={{ animationDelay: "0.5s" }}
+            />
           </>
         )}
       </div>
@@ -143,11 +148,13 @@ const VoiceChat = () => {
 
             <div className="text-center text-sm space-y-2">
               {status === "connected" && (
-                <p className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                  isSpeaking 
-                    ? "bg-sky-500/20 text-sky-400 animate-pulse" 
-                    : "bg-emerald-500/20 text-emerald-400"
-                }`}>
+                <p
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    isSpeaking
+                      ? "bg-sky-500/20 text-sky-400 animate-pulse"
+                      : "bg-emerald-500/20 text-emerald-400"
+                  }`}
+                >
                   {isSpeaking ? "Agent is speaking..." : "Listening..."}
                 </p>
               )}
@@ -165,13 +172,13 @@ const VoiceChat = () => {
           </div>
         </CardContent>
       </Card>
-      
-      <div 
+
+      <div
         className="z-10 w-[35vw] transition-all duration-700"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <Avatar3D isSpeaking={isSpeaking} />
+     { gender ?  <AvatarFemale gender={gender} isSpeaking={isSpeaking} /> : <AvatarMale gender={gender} isSpeaking={isSpeaking} />}
       </div>
     </div>
   );
