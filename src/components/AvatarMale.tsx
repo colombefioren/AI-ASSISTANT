@@ -46,7 +46,7 @@ const AvatarMale = ({
       "camera",
       0, // alpha (horizontal rotation)
       Math.PI / 2, // beta (vertical rotation)
-      0.3, // radius (distance from target)
+      0.8, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );

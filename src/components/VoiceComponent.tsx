@@ -80,7 +80,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
   };
 
   return (
-    <div className="flex items-center gap-[5vw]">
+    <div className="flex items-center gap-[5vw] flex-col sm:flex-row">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-95" />
@@ -178,7 +178,11 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-     { gender ?  <AvatarFemale gender={gender} isSpeaking={isSpeaking} /> : <AvatarMale gender={gender} isSpeaking={isSpeaking} />}
+        {gender ? (
+          <AvatarFemale gender={gender} isSpeaking={isSpeaking} />
+        ) : (
+          <AvatarMale gender={gender} isSpeaking={isSpeaking} />
+        )}
       </div>
     </div>
   );

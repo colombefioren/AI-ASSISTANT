@@ -46,7 +46,7 @@ const AvatarFemale = ({
       "camera",
       0, // alpha (horizontal rotation)
       Math.PI / 2, // beta (vertical rotation)
-      0.3, // radius (distance from target)
+      0.8, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
@@ -119,7 +119,7 @@ const AvatarFemale = ({
             // Adjust model position and scale
 
             mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Slightly larger
-            mesh.position = new BABYLON.Vector3(0, -1.4, 0); // Slightly lower
+            mesh.position = new BABYLON.Vector3(0, -1.1, 0); // Slightly lower
             mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Face forward
 
             // Try to adjust skeleton for a rest position
