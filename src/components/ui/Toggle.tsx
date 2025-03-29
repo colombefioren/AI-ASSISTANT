@@ -24,8 +24,8 @@ const Toggle = ({
       <Switch
         checked={enabled}
         onChange={setEnabled}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
-          enabled ? "bg-gradient-to-r from-sky-500 to-blue-500" : "bg-slate-600"
+        className={`relative inline-flex h-8 w-16 items-center rounded-full transition bg-gray-300 dark:bg-gray-700 p-1 duration-300 ease-in-out ${
+          enabled ? "bg-blue-400" : "bg-gray-400"
         }`}
       >
         <span
