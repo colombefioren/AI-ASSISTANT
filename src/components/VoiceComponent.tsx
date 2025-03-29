@@ -109,7 +109,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
                 size="icon"
                 onClick={toggleMute}
                 disabled={status !== "connected"}
-                className="bg-slate-700/50 hover:bg-slate-600/70 text-slate-200 hover:text-white transition-colors"
+                className="bg-slate-700/50 hover:bg-slate-600/70 text-slate-200 hover:text-white transition-all duration-300 hover:scale-105"
               >
                 {isMuted ? (
                   <VolumeX className="h-4 w-4" />
@@ -127,7 +127,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
                 <Button
                   variant="destructive"
                   onClick={handleEndConversation}
-                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105"
+                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105 rounded-full"
                   size="lg"
                 >
                   <MicOff className="mr-2 h-4 w-4" />
@@ -149,22 +149,22 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
             <div className="text-center text-sm space-y-2">
               {status === "connected" && (
                 <p
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                  className={`inline-block px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm ${
                     isSpeaking
-                      ? "bg-sky-500/20 text-sky-400 animate-pulse"
-                      : "bg-emerald-500/20 text-emerald-400"
+                      ? "bg-sky-500/20 text-sky-400 animate-pulse border border-sky-500/30"
+                      : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                   }`}
                 >
                   {isSpeaking ? "Agent is speaking..." : "Listening..."}
                 </p>
               )}
               {errorMessage && (
-                <p className="text-rose-400 bg-rose-900/30 px-3 py-1 rounded-full inline-block">
+                <p className="text-rose-400 bg-rose-900/30 px-4 py-2 rounded-full inline-block border border-rose-500/30">
                   {errorMessage}
                 </p>
               )}
               {!hasPermission && (
-                <p className="text-amber-400 bg-amber-900/30 px-3 py-1 rounded-full inline-block">
+                <p className="text-amber-400 bg-amber-900/30 px-4 py-2 rounded-full inline-block border border-amber-500/30">
                   Please allow microphone access to use voice chat
                 </p>
               )}
