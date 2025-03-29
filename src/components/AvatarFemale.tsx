@@ -44,16 +44,74 @@ const AvatarFemale = ({
     // Camera setup
     const camera = new BABYLON.ArcRotateCamera(
       "camera",
-      0, // alpha (horizontal rotation)
-      Math.PI / 2, // beta (vertical rotation)
-      0.8, // radius (distance from target)
+      -1.5825843394788548, // alpha (horizontal rotation)
+      1.7618007001517981, // beta (vertical rotation)
+      4.430714824894188, // radius (distance from target)
       new BABYLON.Vector3(0, 1.65, 0),
       scene
     );
     camera.attachControl(canvasRef.current, true);
-    camera.lowerBetaLimit = Math.PI / 3;
-    camera.upperBetaLimit = Math.PI / 1.7;
+    camera.lowerBetaLimit = 1.0471975511965976; // Math.PI / 3
+    camera.upperBetaLimit = 1.8479956785822313; // Math.PI / 1.7
     camera.fov = 0.2; // Reduce FOV for a more zoomed in look
+
+    // Add camera debugging
+    const viewMatrixObserver = camera.onViewMatrixChangedObservable.add(() => {
+      console.log("Camera View Matrix Changed:", {
+        position: camera.position,
+        target: camera.target,
+        alpha: camera.alpha,
+        beta: camera.beta,
+        radius: camera.radius,
+        fov: camera.fov,
+        lowerBetaLimit: camera.lowerBetaLimit,
+        upperBetaLimit: camera.upperBetaLimit,
+        lowerRadiusLimit: camera.lowerRadiusLimit,
+        upperRadiusLimit: camera.upperRadiusLimit,
+        inertialAlphaOffset: camera.inertialAlphaOffset,
+        inertialBetaOffset: camera.inertialBetaOffset,
+        inertialRadiusOffset: camera.inertialRadiusOffset,
+        viewMatrix: camera.getViewMatrix(),
+        projectionMatrix: camera.getProjectionMatrix(),
+      });
+    });
+
+    // Log initial camera state
+    console.log("Initial Camera State:", {
+      position: camera.position,
+      target: camera.target,
+      alpha: camera.alpha,
+      beta: camera.beta,
+      radius: camera.radius,
+      fov: camera.fov,
+    });
+
+    // Add camera control debugging
+    const pointerObserver = scene.onPointerObservable.add((pointerInfo) => {
+      if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+        console.log("Camera Pointer Down:", {
+          event: pointerInfo.event,
+          cameraPosition: camera.position,
+          cameraTarget: camera.target,
+        });
+      } else if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+        console.log("Camera Pointer Up:", {
+          event: pointerInfo.event,
+          cameraPosition: camera.position,
+          cameraTarget: camera.target,
+        });
+      }
+    });
+
+    // Handle wheel events through the canvas
+    const wheelHandler = (event: WheelEvent) => {
+      console.log("Camera Wheel:", {
+        delta: event.deltaY,
+        cameraRadius: camera.radius,
+        cameraPosition: camera.position,
+      });
+    };
+    canvasRef.current?.addEventListener("wheel", wheelHandler);
 
     // Lighting
     new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
@@ -243,6 +301,12 @@ const AvatarFemale = ({
         cancelAnimationFrame(mouthAnimationRef.current);
       if (blinkAnimationRef.current)
         cancelAnimationFrame(blinkAnimationRef.current);
+
+      // Cleanup observers and event listeners
+      viewMatrixObserver?.remove();
+      pointerObserver?.remove();
+      canvasRef.current?.removeEventListener("wheel", wheelHandler);
+
       engine.dispose();
     };
   }, []);
