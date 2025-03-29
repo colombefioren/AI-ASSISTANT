@@ -8,6 +8,7 @@ import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AvatarFemale from "./AvatarFemale";
 import AvatarMale from "./AvatarMale";
+import { FeedbackPopup } from "./ui/FeedbackPopup";
 
 const VoiceChat = ({ gender }: { gender: boolean }) => {
   const [hasPermission, setHasPermission] = useState(false);
@@ -15,6 +16,19 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [showGreeting, setShowGreeting] = useState(true);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [hasConversationEnded, setHasConversationEnded] = useState(false);
+  const [feedbackItems, setFeedbackItems] = useState<string[]>([]);
+
+  const generateFeedback = () => {
+    return [
+      "Work on speaking more clearly in technical explanations",
+      "Try to structure your answers using the STAR method",
+      "Good demonstration of problem-solving skills",
+      "Could provide more specific examples from your experience",
+      "Excellent communication of complex concepts",
+    ];
+  };
 
   const conversation = useConversation({
     onConnect: () => {
@@ -71,6 +85,15 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
   const handleEndConversation = async () => {
     try {
       await conversation.endSession();
+      setHasConversationEnded(true);
+      // Generate or fetch actual feedback here
+      setFeedbackItems([
+        "Good job explaining your thought process clearly",
+        "Try to speak a bit slower for better clarity",
+        "Excellent technical knowledge demonstrated",
+        "Could provide more concrete examples from your experience",
+        "Work on structuring answers more systematically",
+      ]);
     } catch (error) {
       setErrorMessage("Failed to end conversation");
       console.error("Error ending conversation:", error);
@@ -149,12 +172,12 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="flex justify-center">
+            <div className="flex flex-col gap-4">
               {status === "connected" ? (
                 <Button
                   variant="destructive"
                   onClick={handleEndConversation}
-                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105 rounded-full"
+                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transition-all duration-300 hover:scale-105 rounded-full"
                   size="lg"
                 >
                   <MicOff className="mr-2 h-4 w-4" />
@@ -164,13 +187,26 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
                 <Button
                   onClick={handleStartConversation}
                   disabled={!hasPermission}
-                  className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 transform hover:scale-105 rounded-full"
+                  className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-105 rounded-full"
                   size="lg"
                 >
                   <Mic className="mr-2 h-4 w-4" />
                   Start Interview
                 </Button>
               )}
+
+              <Button
+                onClick={() => setShowFeedback(true)}
+                disabled={!hasConversationEnded}
+                className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg transition-all duration-300 hover:scale-105 rounded-full ${
+                  !hasConversationEnded
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:from-purple-700 hover:to-indigo-700"
+                }`}
+                size="lg"
+              >
+                Show Feedback
+              </Button>
             </div>
 
             <div className="text-center text-sm space-y-2">
@@ -199,7 +235,11 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
           </div>
         </CardContent>
       </Card>
-
+      <FeedbackPopup
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        feedbackItems={feedbackItems}
+      />
       <div
         className="z-10 w-[35vw] transition-all duration-700"
         onMouseEnter={() => setIsHovered(true)}
