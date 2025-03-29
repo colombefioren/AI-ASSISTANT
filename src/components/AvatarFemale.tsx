@@ -41,7 +41,6 @@ const AvatarFemale = ({
     sceneRef.current = scene;
     scene.clearColor = BABYLON.Color4.FromHexString("#FFF");
 
-    // Camera setup
     const camera = new BABYLON.ArcRotateCamera(
       "camera",
       -1.5824766033315483, // alpha (horizontal rotation)
@@ -135,7 +134,6 @@ const AvatarFemale = ({
     );
     directionalLight.intensity = 0.8;
 
-    // Load the model
     BABYLON.SceneLoader.ImportMesh(
       "",
       "https://models.readyplayer.me/",
@@ -146,14 +144,13 @@ const AvatarFemale = ({
           if (mesh.morphTargetManager) {
             morphTargetManagerRef.current = mesh.morphTargetManager;
 
-            // Log all available morph targets
+     
             console.log("All available morph targets:");
             for (let i = 0; i < mesh.morphTargetManager.numTargets; i++) {
               const target = mesh.morphTargetManager.getTarget(i);
               console.log(`Target ${i}: ${target.name}`);
             }
 
-            // Find and store eye targets
             leftEyeRef.current = findMorphTarget([
               "eyeBlinkLeft",
               "eyeBlink_L",
@@ -187,15 +184,12 @@ const AvatarFemale = ({
               both: bothEyesRef.current?.name,
             });
 
-            // Adjust model position and scale
 
-            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); // Slightly larger
-            mesh.position = new BABYLON.Vector3(0, -1.1, 0); // Slightly lower
-            mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); // Face forward
+            mesh.scaling = new BABYLON.Vector3(1.8, 1.8, 1.8); 
+            mesh.position = new BABYLON.Vector3(0, -1.1, 0); 
+            mesh.rotation = new BABYLON.Vector3(0, Math.PI, 0); 
 
-            // Try to adjust skeleton for a rest position
             if (mesh.skeleton) {
-              // Find and adjust arm bones
               const leftArmBones = mesh.skeleton.bones.filter(
                 (bone) =>
                   bone.name.toLowerCase().includes("left") &&
@@ -209,25 +203,22 @@ const AvatarFemale = ({
                     bone.name.toLowerCase().includes("shoulder"))
               );
 
-              // Adjust left arm - bring it down from T-pose
               leftArmBones.forEach((bone) => {
                 bone.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(45) // More inward rotation to bring arm down
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(45) 
                 );
               });
 
-              // Adjust right arm - bring it down from T-pose
               rightArmBones.forEach((bone) => {
                 bone.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(-45) // More inward rotation to bring arm down
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(-45) 
                 );
               });
 
-              // Find and adjust leg bones
               const leftLegBones = mesh.skeleton.bones.filter(
                 (bone) =>
                   bone.name.toLowerCase().includes("left") &&
@@ -241,47 +232,38 @@ const AvatarFemale = ({
                     bone.name.toLowerCase().includes("hip"))
               );
 
-              // Adjust legs slightly
               leftLegBones.forEach((bone) => {
                 bone.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(5) // Slight inward rotation
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(5) 
                 );
               });
 
               rightLegBones.forEach((bone) => {
                 bone.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(-5) // Slight inward rotation
+                  BABYLON.Tools.ToRadians(0),
+                  BABYLON.Tools.ToRadians(0),
+                  BABYLON.Tools.ToRadians(-5) 
                 );
               });
 
-              // Find and adjust spine bones for a more natural posture
               const spineBones = mesh.skeleton.bones.filter(
                 (bone) =>
                   bone.name.toLowerCase().includes("spine") ||
                   bone.name.toLowerCase().includes("pelvis")
               );
 
-              // Adjust spine for a more natural posture
               spineBones.forEach((bone) => {
                 bone.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(5), // Slight forward tilt
-                  BABYLON.Tools.ToRadians(0), // No rotation
-                  BABYLON.Tools.ToRadians(0) // No side tilt
+                  BABYLON.Tools.ToRadians(5), 
+                  BABYLON.Tools.ToRadians(0), 
+                  BABYLON.Tools.ToRadians(0) 
                 );
               });
 
-              // Log all bones for debugging
-              console.log(
-                "All bones:",
-                mesh.skeleton.bones.map((bone) => bone.name)
-              );
             }
 
-            // Try to find and play any available animations
             if (mesh.animations && mesh.animations.length > 0) {
               console.log(
                 "Available animations:",
@@ -382,7 +364,6 @@ const AvatarFemale = ({
         const elapsed = Date.now() - blinkStartTime;
         const progress = Math.min(elapsed / BLINK_DURATION, 1);
 
-        // Smooth easing function
         const ease = (t: number) =>
           t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
@@ -411,12 +392,10 @@ const AvatarFemale = ({
 
           blinkAnimationRef.current = requestAnimationFrame(animateBlink);
         } else {
-          // Blink complete - reset to open
           if (leftEyeRef.current) leftEyeRef.current.influence = EYES_OPEN;
           if (rightEyeRef.current) rightEyeRef.current.influence = EYES_OPEN;
           if (bothEyesRef.current) bothEyesRef.current.influence = EYES_OPEN;
 
-          // Schedule next blink
           const nextBlink =
             BLINK_INTERVAL_MIN +
             Math.random() * (BLINK_INTERVAL_MAX - BLINK_INTERVAL_MIN);

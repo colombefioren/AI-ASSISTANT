@@ -5,7 +5,6 @@ import { Lock, Mail, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-// Define types for our form data and errors
 type FormData = {
   email: string;
   password: string;
@@ -23,7 +22,6 @@ type NotificationType = {
   message: string;
 };
 
-// Mock function with proper typing
 const checkUserExists = async (email: string): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
   const existingUsers = ["test@example.com", "user@demo.com"];
@@ -86,43 +84,45 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       if (isRegistering) {
         const userExists = await checkUserExists(formData.email);
         if (userExists) {
           setNotification({
-            type: 'error',
-            message: 'An account with this email already exists. Please login instead.',
+            type: "error",
+            message:
+              "An account with this email already exists. Please login instead.",
           });
           return;
         }
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         setNotification({
-          type: 'success',
-          message: 'Registration successful! Redirecting...',
+          type: "success",
+          message: "Registration successful! Redirecting...",
         });
         setIsRegistering(false);
-        // Redirect after a short delay to show the success message
         setTimeout(() => router.push("/interview"), 1500);
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         setNotification({
-          type: 'success',
-          message: 'Login successful! Redirecting...',
+          type: "success",
+          message: "Login successful! Redirecting...",
         });
-        // Redirect after a short delay to show the success message
         setTimeout(() => router.push("/interview"), 1500);
       }
     } catch (error) {
       setNotification({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'An error occurred. Please try again.',
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "An error occurred. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -135,7 +135,6 @@ const LoginForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sky-500/10 via-transparent to-transparent" />
@@ -175,7 +174,6 @@ const LoginForm = () => {
         transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Notification popup */}
         {notification && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -199,7 +197,6 @@ const LoginForm = () => {
         )}
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          {/* Header with slogan */}
           <div className="p-8 text-center">
             <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 mb-2">
               AI Interview Coach
@@ -214,7 +211,6 @@ const LoginForm = () => {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="px-8 pb-8">
             {isRegistering && (
               <motion.div
@@ -351,7 +347,6 @@ const LoginForm = () => {
           </form>
         </div>
 
-        {/* Footer */}
         <div className="text-center text-xs text-gray-400 mt-6">
           <p>
             Practice with our AI and get real-time feedback on your interviews

@@ -37,7 +37,6 @@ const LandingPage = () => {
       {/* Animated background */}
       <ParticleBackground />
 
-      {/* Navigation */}
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Sparkles className="h-6 w-6 text-sky-400" />
@@ -65,7 +64,6 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-16 sm:py-24 lg:py-32">
         <div className="text-center">
           <motion.h1
@@ -111,7 +109,6 @@ const LandingPage = () => {
           </motion.div>
         </div>
 
-        {/* Features Preview */}
         <motion.div
           id="features"
           initial={{ opacity: 0 }}
@@ -137,7 +134,6 @@ const LandingPage = () => {
           ))}
         </motion.div>
 
-        {/* Demo Preview - More Compact */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -172,7 +168,6 @@ const LandingPage = () => {
         </motion.div>
       </main>
 
-      {/* Enhanced Footer */}
       <footer className="relative z-10 border-t border-white/10 mt-16 py-12 bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
