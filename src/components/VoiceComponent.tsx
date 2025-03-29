@@ -25,7 +25,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
     },
     onMessage: (message) => {
       console.log("Received message:", message);
-      setShowGreeting(false); // Hide greeting when first message arrives
+      setShowGreeting(false);
     },
     onError: (error: string | Error) => {
       setErrorMessage(typeof error === "string" ? error : error.message);
@@ -89,7 +89,6 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
 
   return (
     <div className="flex items-center gap-[5vw] flex-col sm:flex-row">
-      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-95" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sky-500/5 via-transparent to-transparent" />

@@ -16,12 +16,10 @@ export default function Home() {
 
   useEffect(() => {
     if (!hasShown) {
-      // Wait 1.5 seconds before showing
       const showTimer = setTimeout(() => {
         setShowBubble(true);
       }, 1500);
 
-      // Hide after 5 seconds (3.5 seconds visible)
       const hideTimer = setTimeout(() => {
         setShowBubble(false);
         setHasShown(true);
