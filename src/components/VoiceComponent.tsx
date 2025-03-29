@@ -151,7 +151,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-slate-100">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 font-semibold">
-              Your AI Interviewer
+              {gender ? "Ms. Coco" : "Mr. Mimi"}
             </span>
             <div className="flex gap-2">
               <Button
