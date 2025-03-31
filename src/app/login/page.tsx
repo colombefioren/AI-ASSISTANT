@@ -123,14 +123,14 @@ const LoginForm = () => {
           message: "Registration successful! Redirecting...",
         });
         setIsRegistering(false);
-        setTimeout(() => router.push("/interview"), 1500);
+        router.push("/interview");
       } else {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setNotification({
           type: "success",
           message: "Login successful! Redirecting...",
         });
-        setTimeout(() => router.push("/interview"), 1500);
+        () => router.push("/interview");
       }
     } catch (error) {
       setNotification({
