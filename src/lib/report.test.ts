@@ -55,4 +55,22 @@ describe("buildReport", () => {
     expect(report.answers).toBe(3);
     expect(report.strengths.length + report.improvements.length).toBeGreaterThan(2);
   });
+
+  it("analyses french answers with french fillers, outcomes and pronouns", () => {
+    const answer =
+      "Euh, du coup dans mon dernier poste j'ai repris le tableau de bord que toute l'équipe trouvait trop lent. J'ai réécrit les requêtes une par une, j'ai mis en place un calcul nocturne et j'ai présenté le résultat. Les pages se chargent 40 % plus vite.";
+    const report = buildReport([line("interviewer", "Parlez-moi d'une réussite.", 0), line("candidate", answer, 1)], 60, "fr");
+    expect(report.language).toBe("fr");
+    expect(report.topFillers.map((f) => f.phrase)).toEqual(expect.arrayContaining(["euh", "du coup"]));
+    expect(report.outcomeRate).toBe(1);
+    expect(report.ownership).toBeGreaterThan(0.55);
+  });
+
+  it("flags nous and on in french answers", () => {
+    const answer =
+      "Nous avons planifié le projet ensemble, on a construit le service, nous avons testé nos idées et on a livré notre version quand nous étions prêts.";
+    const report = buildReport([line("candidate", answer, 1)], 20, "fr");
+    expect(report.improvements.some((s) => s.includes('"nous" or "on"'))).toBe(true);
+  });
 });
+

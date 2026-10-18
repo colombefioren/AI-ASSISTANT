@@ -49,16 +49,21 @@ for microphone access when the interview starts.
 | `NEXTAUTH_SECRET` | yes | Random secret for signing sessions (`openssl rand -base64 32`). |
 | `ELEVENLABS_API_KEY` | no | Enables private agents through signed URLs. |
 | `ELEVENLABS_AGENT_ID_COCO`, `ELEVENLABS_AGENT_ID_MIMI` | no | Agent ids for each interviewer. Default to the project's public agents. |
-| `ELEVENLABS_ALLOW_OVERRIDES` | no | `true` sends the app's English interviewer prompt and first message. Requires Overrides to be enabled in the agent's Security settings. |
+| `ELEVENLABS_ALLOW_OVERRIDES` | no | `true` also sends the app's interviewer prompt and first message in the chosen language. Requires Overrides to be enabled in the agent's Security settings. |
 | `TRUST_PROXY` | no | `true` when a proxy you control sets `X-Forwarded-For`. |
 
 ### Interview language
 
-The interviewer's language comes from the ElevenLabs agent configuration. The app asks
-every agent to continue in English, but the agent's first message is fixed in its
-dashboard. For a fully English interview, either set the agent's language and first
-message to English in ElevenLabs, or enable Overrides on the agent and set
-`ELEVENLABS_ALLOW_OVERRIDES=true`.
+Pick **FR** or **EN** in the interview room before starting. The choice is remembered
+on that browser until you change it. Each session sends the language to ElevenLabs as a
+conversation override and tells the interviewer to stay in it, so the whole interview
+keeps that language even if you answer in the other one. Reports use matching word lists
+(for example "euh" and "du coup" as French fillers).
+
+Each agent's opening line comes from its ElevenLabs configuration (Agent, then Languages).
+Set a proper English first message there for every agent you use in English. To let the
+app send its own interviewer prompt and opening line instead, enable Overrides in the
+agent's Security settings and set `ELEVENLABS_ALLOW_OVERRIDES=true`.
 
 ## Scripts
 
