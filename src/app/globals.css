@@ -2,158 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Shape system: interactive controls are full pills, panels use
+  rounded-panel (16px), form fields use rounded-field (12px).
+  Z-index scale: header 30, overlay 40, dialog 50.
+*/
+
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 0 0% 100%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 0 0% 100%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 0 0% 100%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --radius: 0.5rem;
+    --canvas: 246 247 245;
+    --surface: 252 252 251;
+    --surface-raised: 237 240 236;
+    --line: 220 224 219;
+    --ink: 21 24 22;
+    --ink-muted: 86 94 89;
+    --accent: 21 122 71;
+    --accent-ink: 246 250 247;
+    --danger: 185 38 50;
+    color-scheme: light;
   }
-}
 
-@layer base {
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: 13 15 14;
+      --surface: 21 24 22;
+      --surface-raised: 30 34 31;
+      --line: 44 49 46;
+      --ink: 234 237 234;
+      --ink-muted: 152 161 155;
+      --accent: 98 211 145;
+      --accent-ink: 8 28 17;
+      --danger: 248 113 113;
+      color-scheme: dark;
+    }
+  }
+
   * {
-    @apply border-border;
+    @apply border-line;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    @apply bg-slate-900 text-white antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.25);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
   }
 }
 
-@layer components {
-  .text-gradient {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  
-  .text-primary {
-    @apply text-white font-medium;
-  }
-  
-  .text-secondary {
-    @apply text-white/90 font-medium;
-  }
-  
-  .text-muted {
-    @apply text-white/80 font-medium;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-in-out forwards;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Custom animations */
-@keyframes gradientFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.4);
-    border-color: rgba(216, 180, 254, 0.8);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(192, 132, 252, 0);
-    border-color: rgba(216, 180, 254, 1);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(192, 132, 252, 0);
-    border-color: rgba(216, 180, 254, 0.8);
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 1.5s infinite;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Text selection */
-::selection {
-  background: rgba(56, 189, 248, 0.2);
-  color: white;
-}
-
-/* Focus styles */
-*:focus-visible {
-  outline: 2px solid rgba(56, 189, 248, 0.5);
-  outline-offset: 2px;
-}
-
-/* Ensure text remains visible after animations */
-.motion-safe\:animate-fade-in {
-  animation: fadeIn 0.5s ease-in-out forwards !important;
-}
-
-.motion-safe\:animate-slide-up {
-  animation: slideUp 0.5s ease-in-out forwards !important;
 }

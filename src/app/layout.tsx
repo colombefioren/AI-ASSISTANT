@@ -1,32 +1,41 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { brand } from "@/lib/brand";
 import "./globals.css";
 
-const inter = Inter({
+const geistSans = Geist({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
-  adjustFontFallback: true,
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
-  title: "AI Interview Coach | Practice Interviews with AI",
-  description: "Master your interview skills with our AI-powered interview simulator. Get instant feedback and improve your chances of landing your dream job.",
-  keywords: "AI interview, interview practice, job interview, interview simulator, career development",
+  title: {
+    default: `${brand.name} | Mock interviews with a 3D AI interviewer`,
+    template: `%s | ${brand.name}`,
+  },
+  description: brand.description,
+  keywords: ["mock interview", "interview practice", "AI interviewer", "job interview", "career"],
+  applicationName: brand.name,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0f0e" },
+  ],
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} font-sans min-h-screen bg-slate-900 text-white antialiased [text-rendering:optimizeLegibility]`}>
-        <div className="relative min-h-screen">
-          {children}
-        </div>
-      </body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="min-h-[100dvh] font-sans">{children}</body>
     </html>
   );
 }

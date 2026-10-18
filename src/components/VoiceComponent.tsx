@@ -183,7 +183,7 @@ const VoiceChat = ({ gender }: { gender: boolean }) => {
             <div className="flex flex-col gap-4">
               {status === "connected" ? (
                 <Button
-                  variant="destructive"
+                  variant="danger"
                   onClick={handleEndConversation}
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transition-all duration-300 hover:scale-105 rounded-full"
