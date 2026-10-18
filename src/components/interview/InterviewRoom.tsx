@@ -52,6 +52,10 @@ function Room({ userName, initialHistory }: RoomProps) {
   const endedAt = useRef(0);
   const hasSpeech = useRef(false);
   const linesRef = useRef<TranscriptLine[]>([]);
+  // Interviewer of the session in progress, so switching after it ends
+  // cannot relabel or re-save it.
+  const sessionInterviewer = useRef<InterviewerId>(interviewerId);
+  const savedSession = useRef(false);
   linesRef.current = lines;
 
   const interviewer = interviewers[interviewerId];
@@ -129,6 +133,8 @@ function Room({ userName, initialHistory }: RoomProps) {
     setError(null);
     setLines([]);
     hasSpeech.current = false;
+    savedSession.current = false;
+    sessionInterviewer.current = interviewerId;
     setSaveState({ status: "idle" });
     setTab("report");
     setPhase("connecting");
@@ -154,6 +160,7 @@ function Room({ userName, initialHistory }: RoomProps) {
   }, [conversation, interviewerId]);
 
   const saveSession = useCallback(async () => {
+    const sessionId = sessionInterviewer.current;
     if (!linesRef.current.some((line) => line.speaker === "candidate")) {
       setSaveState({ status: "skipped" });
       return;
@@ -164,7 +171,7 @@ function Room({ userName, initialHistory }: RoomProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          interviewer: interviewerId,
+          interviewer: sessionId,
           durationSec: Math.max(0, Math.round((endedAt.current - startedAt.current) / 1000)),
           transcript: linesRef.current.slice(-400),
         }),
@@ -175,7 +182,7 @@ function Room({ userName, initialHistory }: RoomProps) {
       setHistory((current) => [
         {
           id: data.id,
-          interviewer: interviewerId,
+          interviewer: sessionId,
           createdAt: data.createdAt,
           durationSec: data.report.durationSec,
           answers: data.report.answers,
@@ -185,10 +192,12 @@ function Room({ userName, initialHistory }: RoomProps) {
     } catch (cause) {
       setSaveState({ status: "error", message: cause instanceof Error ? cause.message : "Could not save this session." });
     }
-  }, [interviewerId]);
+  }, []);
 
   useEffect(() => {
-    if (phase === "ended") void saveSession();
+    if (phase !== "ended" || savedSession.current) return;
+    savedSession.current = true;
+    void saveSession();
   }, [phase, saveSession]);
 
   const toggleSpeaker = () => setSpeakerMuted((muted) => !muted);
