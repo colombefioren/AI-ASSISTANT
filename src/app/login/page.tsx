@@ -10,8 +10,9 @@ export const metadata: Metadata = {
 
 function safeCallbackUrl(value: string | string[] | undefined) {
   const url = Array.isArray(value) ? value[0] : value;
-  // Only allow same-origin relative paths to avoid open redirects.
-  return url && url.startsWith("/") && !url.startsWith("//") ? url : "/interview";
+  // Only allow same-origin relative paths. Rejecting "//", backslashes and
+  // whitespace blocks protocol-relative tricks like "/\\evil.example".
+  return url && /^\/(?![\\/])[^\\\s]*$/.test(url) ? url : "/interview";
 }
 
 export default async function LoginPage({
