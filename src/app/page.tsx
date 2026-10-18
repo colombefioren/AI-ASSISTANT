@@ -100,11 +100,14 @@ function HeroSection() {
                 <figcaption className="absolute bottom-4 rounded-full border border-white/10 bg-canvas/80 px-3.5 py-1.5 text-sm font-medium backdrop-blur">
                   {interviewers[id].displayName}
                 </figcaption>
+                {id === "coco" && (
+                  // Anchored to the figure so it stays beside her head at every width.
+                  <div className="absolute left-[64%] top-[6%] hidden w-max max-w-[15rem] rounded-2xl rounded-bl-none bg-slate-50 px-4 py-2.5 text-sm leading-snug text-slate-900 sm:block lg:max-w-none">
+                    Hi there! Let&apos;s start your interview.
+                  </div>
+                )}
               </figure>
             ))}
-          </div>
-          <div className="absolute left-[9%] top-6 hidden w-max max-w-[19rem] rounded-2xl rounded-bl-md bg-slate-50 px-4 py-3 text-sm leading-snug text-slate-900 sm:block md:left-[14%]">
-            Hi there! Let&apos;s start your interview.
           </div>
         </div>
       </div>
