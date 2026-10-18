@@ -40,7 +40,7 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
       setErrors({
         form:
           result?.error === "RateLimited"
-            ? "Too many attempts. Wait a few minutes and try again."
+            ? "Too many attempts. Wait a moment and try again."
             : "That email and password do not match an account.",
       });
       return false;

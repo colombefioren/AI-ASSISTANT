@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clientIp, rateLimit, refundLimit } from "./rate-limit";
+import { clientIp, rateLimit } from "./rate-limit";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -13,13 +13,6 @@ describe("rateLimit", () => {
     const third = rateLimit(key, 2, 60_000);
     expect(third.ok).toBe(false);
     if (!third.ok) expect(third.retryAfterSeconds).toBeGreaterThan(0);
-  });
-
-  it("frees a slot when a reserved attempt is refunded", () => {
-    const key = `test-refund:${Math.random()}`;
-    rateLimit(key, 1, 60_000);
-    refundLimit(key);
-    expect(rateLimit(key, 1, 60_000).ok).toBe(true);
   });
 });
 

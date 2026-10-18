@@ -61,17 +61,6 @@ export function rateLimit(key: string, limit: number, windowMs: number): LimitRe
   return { ok: true };
 }
 
-/** Gives back the most recent hit, e.g. after a reserved attempt succeeded. */
-export function refundLimit(key: string) {
-  const safeKey = key.slice(0, 200);
-  const table = tableFor(safeKey);
-  const bucket = table.get(safeKey);
-  if (!bucket) return;
-  bucket.hits.pop();
-  // Successful sign-ins should not leave buckets behind to fill the table.
-  if (bucket.hits.length === 0) table.delete(safeKey);
-}
-
 const IP_PATTERN = /^[0-9a-fA-F:.]{2,45}$/;
 
 /**

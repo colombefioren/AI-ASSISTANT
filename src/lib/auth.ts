@@ -3,12 +3,16 @@ import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
-import { clientIp, rateLimit, refundLimit } from "@/lib/rate-limit";
+import { cancelAttempt, finishAttempt, startAttempt, type BackoffPolicy } from "@/lib/backoff";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { signInSchema } from "@/lib/validation";
 
 // Compared against when the email is unknown so both paths cost one bcrypt
 // round and response time does not reveal which emails have accounts.
 const TIMING_EQUALIZER_HASH = "$2b$12$xS5oCZJX.FY5RY5D83nuCOzk34IM1AnaIit9F.IcfnlKx24sagh4q";
+
+const STRICT: BackoffPolicy = { freeAttempts: 5, maxDelayMs: 30_000, resetAfterMs: 15 * 60 * 1000 };
+const DISTRIBUTED: BackoffPolicy = { freeAttempts: 20, maxDelayMs: 30_000, resetAfterMs: 15 * 60 * 1000 };
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -24,37 +28,41 @@ export const authOptions: NextAuthOptions = {
         const { email, password } = parsed.data;
 
         const ip = clientIp(req.headers ?? {});
-        const window = 15 * 60 * 1000;
-        // Attempts are reserved before any async work so parallel requests
-        // cannot race past the limit, and refunded on success so only failures
-        // accumulate. With a trusted IP, a tight per-(IP, account) limit slows
-        // guessing from one source; the per-account limit caps distributed
-        // guessing. Without one, only the looser per-account limit applies so
-        // a single attacker cannot quickly lock the owner out.
-        const keys = ip
-          ? [
-              { key: `signin-ip:${ip}`, limit: 30 },
-              { key: `signin-fail:${ip}:${email}`, limit: 8 },
-              { key: `signin-fail:${email}`, limit: 40 },
-            ]
-          : [{ key: `signin-fail:${email}`, limit: 20 }];
+        // A per-IP request cap stops one source from hammering sign-in at all.
+        if (ip && !rateLimit(`signin-ip:${ip}`, 30, 15 * 60 * 1000).ok) throw new Error("RateLimited");
 
-        const reserved: string[] = [];
-        for (const { key, limit } of keys) {
-          if (!rateLimit(key, limit, window).ok) {
-            reserved.forEach(refundLimit);
+        // Failed attempts slow down exponentially instead of locking the
+        // account, so an attacker who knows an email can delay its owner by
+        // seconds, never shut them out. With a trusted IP the strict policy is
+        // scoped to that source and the account-wide policy only kicks in
+        // under distributed guessing.
+        const keys: [string, BackoffPolicy][] = ip
+          ? [
+              [`ip:${ip}:${email}`, STRICT],
+              [`account:${email}`, DISTRIBUTED],
+            ]
+          : [[`account:${email}`, STRICT]];
+
+        const started: [string, BackoffPolicy][] = [];
+        for (const [key, policy] of keys) {
+          const attempt = startAttempt(key, policy);
+          if (!attempt.ok) {
+            started.forEach(([startedKey]) => cancelAttempt(startedKey));
             throw new Error("RateLimited");
           }
-          reserved.push(key);
+          started.push([key, policy]);
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        const isValid = await bcrypt.compare(password, user?.password ?? TIMING_EQUALIZER_HASH);
-        if (!user || !isValid) return null;
-
-        // The per-IP request budget stays spent; failure counters are refunded.
-        reserved.filter((key) => key.startsWith("signin-fail:")).forEach(refundLimit);
-        return { id: user.id.toString(), name: user.name, email: user.email };
+        let succeeded = false;
+        try {
+          const user = await prisma.user.findUnique({ where: { email } });
+          const isValid = await bcrypt.compare(password, user?.password ?? TIMING_EQUALIZER_HASH);
+          if (!user || !isValid) return null;
+          succeeded = true;
+          return { id: user.id.toString(), name: user.name, email: user.email };
+        } finally {
+          started.forEach(([key, policy]) => finishAttempt(key, succeeded, policy));
+        }
       },
     }),
   ],
