@@ -22,13 +22,6 @@ function blocked(bucket: Bucket, windowMs: number, now: number): LimitResult {
   return { ok: false, retryAfterSeconds: Math.ceil((windowMs - (now - bucket.hits[0])) / 1000) };
 }
 
-/** Returns whether `key` is still under `limit` without recording a hit. */
-export function peekLimit(key: string, limit: number, windowMs: number): LimitResult {
-  const now = Date.now();
-  const bucket = load(key.slice(0, 200), windowMs, now);
-  return bucket && bucket.hits.length >= limit ? blocked(bucket, windowMs, now) : { ok: true };
-}
-
 /**
  * Records a hit for `key` and reports whether it stayed under `limit`.
  * Sliding window kept in process memory: fine for a single instance, swap for
@@ -52,6 +45,12 @@ export function rateLimit(key: string, limit: number, windowMs: number): LimitRe
   bucket.expiresAt = now + windowMs;
   buckets.set(safeKey, bucket);
   return { ok: true };
+}
+
+/** Gives back the most recent hit, e.g. after a reserved attempt succeeded. */
+export function refundLimit(key: string) {
+  const bucket = buckets.get(key.slice(0, 200));
+  bucket?.hits.pop();
 }
 
 const IP_PATTERN = /^[0-9a-fA-F:.]{2,45}$/;
