@@ -73,7 +73,10 @@ function prepareModel(scene: THREE.Object3D, recolor: Record<string, string> = {
   const bones = boneNames
     .map((name) => findBone(scene, name))
     .filter((bone): bone is THREE.Bone => bone !== null);
-  const rest = new Map(bones.map((bone) => [bone, bone.quaternion.clone()]));
+  // The loader caches this scene, so bones keep the last animated offset after
+  // unmount. Capture the rest pose once, on first preparation, and reuse it.
+  scene.userData.rest ??= new Map(bones.map((bone) => [bone, bone.quaternion.clone()]));
+  const rest = scene.userData.rest as Map<THREE.Bone, THREE.Quaternion>;
 
   return { morphs, bones, rest, head: findBone(scene, "Head") };
 }
