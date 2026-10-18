@@ -19,8 +19,7 @@ export function ThemedImage({ light, dark, alt, width, height, sizes, className 
   return (
     <picture>
       <source media="(prefers-color-scheme: dark)" srcSet={darkProps.srcSet} sizes={sizes} />
-      {/* eslint-disable-next-line @next/next/no-img-element -- <picture> needs a plain img */}
-      <img {...lightProps} className={className} />
+      <img {...lightProps} alt={alt} className={className} />
     </picture>
   );
 }
