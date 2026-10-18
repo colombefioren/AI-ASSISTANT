@@ -3,7 +3,7 @@ import type { InterviewerId } from "@/lib/interviewers";
 
 // Public ElevenLabs agents used by default. Override them per deployment.
 const agentIds: Record<InterviewerId, string> = {
-  coco: process.env.ELEVENLABS_AGENT_ID_COCO || "dqte1WRSWX3A2bDNwJt5",
+  coco: process.env.ELEVENLABS_AGENT_ID_COCO || "agent_8201m5738sdnfjwvmg7n7qpww5w0",
   mimi: process.env.ELEVENLABS_AGENT_ID_MIMI || "zEMF3122dPrA9bMvf0Wl",
 };
 
