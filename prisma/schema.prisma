@@ -7,12 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model userinfo {
+model User {
   id        Int       @id @default(autoincrement())
   name      String    @db.VarChar(255)
   email     String    @unique @db.VarChar(255)
   password  String    @db.VarChar(255)
   createdAt DateTime? @default(now()) @db.Timestamptz(6)
+  sessions  InterviewSession[]
 
   @@index([email], map: "User_email_idx")
+  @@map("userinfo")
+}
+
+model InterviewSession {
+  id          String   @id @default(cuid())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviewer String   @db.VarChar(32)
+  durationSec Int
+  transcript  Json
+  report      Json
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("interview_session")
 }
