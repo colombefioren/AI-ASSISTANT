@@ -9,29 +9,50 @@ import { Logo } from "@/components/ui/Logo";
 import { ENGLISH_ONLY_CONTEXT } from "@/lib/interview-script";
 import { interviewerIds, interviewers, type InterviewerId } from "@/lib/interviewers";
 import { cn } from "@/lib/utils";
+import type { SessionReport } from "@/lib/report";
+import type { SessionSummary } from "@/lib/sessions";
 import { AvatarStage } from "./AvatarStage";
+import { ReportView } from "./ReportView";
+import { SessionHistory } from "./SessionHistory";
 import { Transcript } from "./Transcript";
 import type { AudioBridge } from "./avatar/types";
 import type { TranscriptLine } from "./types";
 
 type Phase = "ready" | "connecting" | "live" | "ended";
 
-export function InterviewRoom({ userName }: { userName: string }) {
+interface RoomProps {
+  userName: string;
+  initialHistory: SessionSummary[];
+}
+
+export function InterviewRoom(props: RoomProps) {
   return (
     <ConversationProvider>
-      <Room userName={userName} />
+      <Room {...props} />
     </ConversationProvider>
   );
 }
 
-function Room({ userName }: { userName: string }) {
+type SaveState = {
+  status: "idle" | "saving" | "saved" | "error" | "skipped";
+  report?: SessionReport;
+  message?: string;
+};
+
+function Room({ userName, initialHistory }: RoomProps) {
   const [interviewerId, setInterviewerId] = useState<InterviewerId>("coco");
   const [phase, setPhase] = useState<Phase>("ready");
   const [error, setError] = useState<string | null>(null);
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [speakerMuted, setSpeakerMuted] = useState(false);
+  const [history, setHistory] = useState(initialHistory);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
+  const [tab, setTab] = useState<"report" | "transcript">("report");
   const startedAt = useRef(0);
+  const endedAt = useRef(0);
   const hasSpeech = useRef(false);
+  const linesRef = useRef<TranscriptLine[]>([]);
+  linesRef.current = lines;
 
   const interviewer = interviewers[interviewerId];
 
@@ -42,6 +63,7 @@ function Room({ userName }: { userName: string }) {
       conversation.sendContextualUpdate(ENGLISH_ONLY_CONTEXT);
     },
     onDisconnect: (details) => {
+      endedAt.current = Date.now();
       if (details.reason === "error") {
         setError(details.closeReason || details.message || "The interviewer ended the connection unexpectedly.");
       }
@@ -104,6 +126,8 @@ function Room({ userName }: { userName: string }) {
     setError(null);
     setLines([]);
     hasSpeech.current = false;
+    setSaveState({ status: "idle" });
+    setTab("report");
     setPhase("connecting");
 
     try {
@@ -126,6 +150,44 @@ function Room({ userName }: { userName: string }) {
       setPhase("ready");
     }
   }, [conversation, interviewerId, speakerMuted]);
+
+  const saveSession = useCallback(async () => {
+    if (!linesRef.current.some((line) => line.speaker === "candidate")) {
+      setSaveState({ status: "skipped" });
+      return;
+    }
+    setSaveState({ status: "saving" });
+    try {
+      const response = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interviewer: interviewerId,
+          durationSec: Math.max(0, Math.round((endedAt.current - startedAt.current) / 1000)),
+          transcript: linesRef.current.slice(-400),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not save this session.");
+      setSaveState({ status: "saved", report: data.report });
+      setHistory((current) => [
+        {
+          id: data.id,
+          interviewer: interviewerId,
+          createdAt: data.createdAt,
+          durationSec: data.report.durationSec,
+          answers: data.report.answers,
+        },
+        ...current,
+      ]);
+    } catch (cause) {
+      setSaveState({ status: "error", message: cause instanceof Error ? cause.message : "Could not save this session." });
+    }
+  }, [interviewerId]);
+
+  useEffect(() => {
+    if (phase === "ended") void saveSession();
+  }, [phase, saveSession]);
 
   const toggleSpeaker = () => {
     const next = !speakerMuted;
@@ -233,8 +295,66 @@ function Room({ userName }: { userName: string }) {
             )}
           </div>
 
+          {phase === "ended" && (
+            <div role="tablist" aria-label="Session results" className="mx-5 mt-5 grid grid-cols-2 rounded-full border bg-canvas p-1 sm:mx-6">
+              {(["report", "transcript"] as const).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === item}
+                  onClick={() => setTab(item)}
+                  className={cn(
+                    "h-8 rounded-full text-sm font-medium capitalize transition-colors",
+                    tab === item ? "bg-surface-raised text-ink" : "text-ink-muted hover:text-ink"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="min-h-[240px] flex-1 overflow-y-auto px-5 sm:px-6">
-            <Transcript lines={lines} interviewerName={interviewer.name} />
+            {phase === "ended" && tab === "report" ? (
+              <div className="py-6">
+                {saveState.status === "saving" && (
+                  <div className="grid gap-4" aria-live="polite" aria-busy>
+                    <p className="text-sm text-ink-muted">Analysing your answers</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[0, 1, 2, 3].map((key) => (
+                        <div key={key} className="h-12 animate-pulse rounded-field bg-surface-raised" />
+                      ))}
+                    </div>
+                    <div className="h-24 animate-pulse rounded-field bg-surface-raised" />
+                  </div>
+                )}
+                {saveState.status === "error" && (
+                  <div className="grid gap-3">
+                    <p role="alert" className="text-sm text-danger">
+                      {saveState.message}
+                    </p>
+                    <Button variant="secondary" size="sm" className="justify-self-start" onClick={() => void saveSession()}>
+                      Try again
+                    </Button>
+                  </div>
+                )}
+                {saveState.status === "skipped" && (
+                  <div className="grid gap-2">
+                    <p className="text-sm font-medium">No answers recorded</p>
+                    <p className="text-sm leading-relaxed text-ink-muted">
+                      The session ended before you answered, so there is nothing to analyse and nothing was saved.
+                    </p>
+                  </div>
+                )}
+                {saveState.status === "saved" && saveState.report && <ReportView report={saveState.report} compact />}
+              </div>
+            ) : (
+              <>
+                <Transcript lines={lines} interviewerName={interviewer.name} follow={connected} />
+                {!busy && phase !== "ended" && <SessionHistory sessions={history} />}
+              </>
+            )}
           </div>
         </aside>
       </main>

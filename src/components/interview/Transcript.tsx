@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { formatClock } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { TranscriptLine } from "./types";
 
-function formatTime(ms: number) {
-  const total = Math.max(0, Math.round(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+interface TranscriptProps {
+  lines: TranscriptLine[];
+  interviewerName: string;
+  /** Keep the newest line in view while a session is live. */
+  follow?: boolean;
 }
 
-export function Transcript({ lines, interviewerName }: { lines: TranscriptLine[]; interviewerName: string }) {
+export function Transcript({ lines, interviewerName, follow = false }: TranscriptProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [lines.length]);
+    if (follow) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [lines.length, follow]);
 
   if (lines.length === 0) {
     return (
@@ -35,7 +38,7 @@ export function Transcript({ lines, interviewerName }: { lines: TranscriptLine[]
             <span className={cn("font-medium", line.speaker === "interviewer" ? "text-accent" : "text-ink")}>
               {line.speaker === "interviewer" ? interviewerName : "You"}
             </span>
-            <span className="font-mono text-ink-muted">{formatTime(line.at)}</span>
+            <span className="font-mono text-ink-muted">{formatClock(line.at)}</span>
           </div>
           <p className="text-[15px] leading-relaxed text-ink">{line.text}</p>
         </li>

@@ -5,5 +5,5 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ["/interview/:path*"],
+  matcher: ["/interview/:path*", "/sessions/:path*"],
 };
