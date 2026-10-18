@@ -7,46 +7,66 @@ function sweep(now: number) {
   for (const [key, bucket] of buckets) {
     if (bucket.expiresAt <= now) buckets.delete(key);
   }
-  // Still full after removing expired entries: drop the oldest insertions.
-  while (buckets.size >= MAX_BUCKETS) {
-    const oldest = buckets.keys().next().value;
-    if (oldest === undefined) break;
-    buckets.delete(oldest);
-  }
+}
+
+function load(key: string, windowMs: number, now: number) {
+  const bucket = buckets.get(key);
+  if (!bucket) return null;
+  bucket.hits = bucket.hits.filter((t) => now - t < windowMs);
+  return bucket;
+}
+
+export type LimitResult = { ok: true } | { ok: false; retryAfterSeconds: number };
+
+function blocked(bucket: Bucket, windowMs: number, now: number): LimitResult {
+  return { ok: false, retryAfterSeconds: Math.ceil((windowMs - (now - bucket.hits[0])) / 1000) };
+}
+
+/** Returns whether `key` is still under `limit` without recording a hit. */
+export function peekLimit(key: string, limit: number, windowMs: number): LimitResult {
+  const now = Date.now();
+  const bucket = load(key.slice(0, 200), windowMs, now);
+  return bucket && bucket.hits.length >= limit ? blocked(bucket, windowMs, now) : { ok: true };
 }
 
 /**
- * Sliding-window limiter kept in process memory. Good enough for a single
- * instance; swap for Redis or Upstash when running more than one server.
+ * Records a hit for `key` and reports whether it stayed under `limit`.
+ * Sliding window kept in process memory: fine for a single instance, swap for
+ * Redis or Upstash when running several servers. Active buckets are never
+ * evicted; when the table is full of live buckets new keys fail closed.
  */
-export function rateLimit(key: string, limit: number, windowMs: number) {
+export function rateLimit(key: string, limit: number, windowMs: number): LimitResult {
   const now = Date.now();
   const safeKey = key.slice(0, 200);
-  if (buckets.size >= MAX_BUCKETS) sweep(now);
+  let bucket = load(safeKey, windowMs, now);
 
-  const bucket = buckets.get(safeKey) ?? { hits: [], expiresAt: now + windowMs };
-  bucket.hits = bucket.hits.filter((t) => now - t < windowMs);
-
-  if (bucket.hits.length >= limit) {
-    buckets.set(safeKey, bucket);
-    const retryAfterMs = windowMs - (now - bucket.hits[0]);
-    return { ok: false as const, retryAfterSeconds: Math.ceil(retryAfterMs / 1000) };
+  if (!bucket) {
+    if (buckets.size >= MAX_BUCKETS) sweep(now);
+    if (buckets.size >= MAX_BUCKETS) return { ok: false, retryAfterSeconds: Math.ceil(windowMs / 1000) };
+    bucket = { hits: [], expiresAt: 0 };
   }
+
+  if (bucket.hits.length >= limit) return blocked(bucket, windowMs, now);
 
   bucket.hits.push(now);
   bucket.expiresAt = now + windowMs;
   buckets.set(safeKey, bucket);
-  return { ok: true as const };
+  return { ok: true };
 }
 
 const IP_PATTERN = /^[0-9a-fA-F:.]{2,45}$/;
 
 /**
- * Prefers the platform-set x-real-ip header, then the right-most
- * x-forwarded-for entry (the one appended by the closest proxy), since the
- * left-most entries are client-controlled and trivially spoofed.
+ * Client IP from proxy headers, or null when they cannot be trusted.
+ * Forwarding headers are client-controlled unless a proxy you run rewrites
+ * them, so they are only read on Vercel (which sets x-real-ip) or when
+ * TRUST_PROXY=true. Behind your own proxy the right-most x-forwarded-for entry
+ * is the one it appended.
  */
 export function clientIp(headers: Headers | Record<string, string | string[] | undefined>) {
+  const trusted = process.env.VERCEL === "1" || process.env.TRUST_PROXY === "true";
+  if (!trusted) return null;
+
   const read = (name: string) => {
     if (headers instanceof Headers) return headers.get(name);
     const value = headers[name];
@@ -55,5 +75,5 @@ export function clientIp(headers: Headers | Record<string, string | string[] | u
   const candidate =
     read("x-real-ip")?.trim() ||
     read("x-forwarded-for")?.split(",").map((part) => part.trim()).filter(Boolean).at(-1);
-  return candidate && IP_PATTERN.test(candidate) ? candidate : "unknown";
+  return candidate && IP_PATTERN.test(candidate) ? candidate : null;
 }

@@ -6,7 +6,11 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { fieldErrors, registerSchema } from "@/lib/validation";
 
 export async function POST(req: Request) {
-  const limit = rateLimit(`register:${clientIp(req.headers)}`, 5, 15 * 60 * 1000);
+  const ip = clientIp(req.headers);
+  // Without a trusted client IP fall back to one shared, looser bucket.
+  const limit = ip
+    ? rateLimit(`register:${ip}`, 5, 15 * 60 * 1000)
+    : rateLimit("register:shared", 60, 15 * 60 * 1000);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "Too many sign-up attempts. Try again in a few minutes." },

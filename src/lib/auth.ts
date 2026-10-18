@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, peekLimit, rateLimit } from "@/lib/rate-limit";
 import { signInSchema } from "@/lib/validation";
 
 export const authOptions: NextAuthOptions = {
@@ -19,17 +19,25 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
 
-        // Per-IP limit slows credential stuffing; per-account limit protects one
-        // account even when the attacker rotates IPs.
-        const ipLimit = rateLimit(`signin-ip:${clientIp(req.headers ?? {})}`, 20, 15 * 60 * 1000);
-        const accountLimit = rateLimit(`signin-account:${email}`, 8, 15 * 60 * 1000);
-        if (!ipLimit.ok || !accountLimit.ok) throw new Error("RateLimited");
+        const ip = clientIp(req.headers ?? {});
+        const window = 15 * 60 * 1000;
+        // Only failed attempts count. The per-(IP, account) key slows guessing
+        // from one source; the looser per-account key caps distributed guessing
+        // without letting a single attacker lock the real owner out quickly.
+        const pairKey = `signin-fail:${ip ?? "unknown"}:${email}`;
+        const accountKey = `signin-fail:${email}`;
+        if (ip && !rateLimit(`signin-ip:${ip}`, 30, window).ok) throw new Error("RateLimited");
+        if (!peekLimit(pairKey, 8, window).ok || !peekLimit(accountKey, 40, window).ok) {
+          throw new Error("RateLimited");
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
+        const isValid = user ? await bcrypt.compare(password, user.password) : false;
+        if (!user || !isValid) {
+          rateLimit(pairKey, 8, window);
+          rateLimit(accountKey, 40, window);
+          return null;
+        }
 
         return { id: user.id.toString(), name: user.name, email: user.email };
       },
