@@ -20,7 +20,7 @@ export function SessionHistory({ sessions }: { sessions: SessionSummary[] }) {
             >
               <span>
                 <span className="block text-sm font-medium">
-                  {isInterviewerId(session.interviewer) ? interviewers[session.interviewer].name : "Interview"} on{" "}
+                  {isInterviewerId(session.interviewer) ? interviewers[session.interviewer].displayName : "Interview"} on{" "}
                   {formatDate(session.createdAt)}
                 </span>
                 <span className="block text-xs text-ink-muted">
