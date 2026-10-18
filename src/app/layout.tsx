@@ -17,19 +17,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} | Mock interviews with a 3D AI interviewer`,
-    template: `%s | ${brand.name}`,
+    default: `${brand.fullName} | Practice interviews with AI`,
+    template: `%s | ${brand.fullName}`,
   },
   description: brand.description,
   keywords: ["mock interview", "interview practice", "AI interviewer", "job interview", "career"],
-  applicationName: brand.name,
+  applicationName: brand.fullName,
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f7f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d0f0e" },
-  ],
+  themeColor: "#090e1c",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

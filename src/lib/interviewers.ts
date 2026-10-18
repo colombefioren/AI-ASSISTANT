@@ -3,6 +3,8 @@ export type InterviewerId = "coco" | "mimi";
 export interface Interviewer {
   id: InterviewerId;
   name: string;
+  /** How the interviewer is addressed in the interface. */
+  displayName: string;
   summary: string;
   avatarUrl: string;
   /** Per-model tuning so lip sync reads equally well on both rigs. */
@@ -18,16 +20,18 @@ export const interviewers: Record<InterviewerId, Interviewer> = {
   coco: {
     id: "coco",
     name: "Coco",
-    summary: "Conversational interviewer with a female voice.",
+    displayName: "Ms. Coco",
+    summary: "Interviewer with a female voice.",
     avatarUrl: "/avatars/coco.glb",
-    rig: { visemeGain: 0.9, jawGain: 0.35 },
+    rig: { visemeGain: 0.8, jawGain: 0.2 },
   },
   mimi: {
     id: "mimi",
     name: "Mimi",
-    summary: "Conversational interviewer with a male voice.",
+    displayName: "Mr. Mimi",
+    summary: "Interviewer with a male voice.",
     avatarUrl: "/avatars/mimi.glb",
-    rig: { visemeGain: 0.85, jawGain: 0.45, recolor: { outfit_top: "#34465a" } },
+    rig: { visemeGain: 0.8, jawGain: 0.22, recolor: { outfit_top: "#34465a" } },
   },
 };
 

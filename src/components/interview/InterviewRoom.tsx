@@ -3,16 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { signOut } from "next-auth/react";
-import { Loader2, LogOut, Mic, MicOff, PhoneOff, Volume2, VolumeX } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, FileText, Loader2, LogOut, Mic, MicOff, PhoneOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
 import { ENGLISH_ONLY_CONTEXT } from "@/lib/interview-script";
-import { interviewerIds, interviewers, type InterviewerId } from "@/lib/interviewers";
+import { interviewers, type InterviewerId } from "@/lib/interviewers";
 import { cn } from "@/lib/utils";
 import type { SessionReport } from "@/lib/report";
 import type { SessionSummary } from "@/lib/sessions";
 import { AvatarStage } from "./AvatarStage";
-import { ReportView } from "./ReportView";
+import { FeedbackDialog } from "./FeedbackDialog";
+import { InterviewerToggle } from "./InterviewerToggle";
 import { SessionHistory } from "./SessionHistory";
 import { Transcript } from "./Transcript";
 import type { AudioBridge } from "./avatar/types";
@@ -33,7 +35,7 @@ export function InterviewRoom(props: RoomProps) {
   );
 }
 
-type SaveState = {
+export type SaveState = {
   status: "idle" | "saving" | "saved" | "error" | "skipped";
   report?: SessionReport;
   message?: string;
@@ -47,7 +49,7 @@ function Room({ userName, initialHistory }: RoomProps) {
   const [speakerMuted, setSpeakerMuted] = useState(false);
   const [history, setHistory] = useState(initialHistory);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
-  const [tab, setTab] = useState<"report" | "transcript">("report");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const startedAt = useRef(0);
   const endedAt = useRef(0);
   const hasSpeech = useRef(false);
@@ -136,7 +138,7 @@ function Room({ userName, initialHistory }: RoomProps) {
     savedSession.current = false;
     sessionInterviewer.current = interviewerId;
     setSaveState({ status: "idle" });
-    setTab("report");
+    setFeedbackOpen(false);
     setPhase("connecting");
 
     try {
@@ -163,6 +165,7 @@ function Room({ userName, initialHistory }: RoomProps) {
     const sessionId = sessionInterviewer.current;
     if (!linesRef.current.some((line) => line.speaker === "candidate")) {
       setSaveState({ status: "skipped" });
+      setFeedbackOpen(true);
       return;
     }
     setSaveState({ status: "saving" });
@@ -179,6 +182,7 @@ function Room({ userName, initialHistory }: RoomProps) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not save this session.");
       setSaveState({ status: "saved", report: data.report });
+      setFeedbackOpen(true);
       setHistory((current) => [
         {
           id: data.id,
@@ -202,169 +206,136 @@ function Room({ userName, initialHistory }: RoomProps) {
 
   const toggleSpeaker = () => setSpeakerMuted((muted) => !muted);
 
-  const latestInterviewerLine = [...lines].reverse().find((line) => line.speaker === "interviewer");
-  const stageStatus = phase === "connecting" ? "connecting" : mode;
   const busy = phase === "connecting" || connected;
+  const statusText =
+    phase === "connecting"
+      ? "Connecting"
+      : connected
+        ? isSpeaking
+          ? `${interviewer.displayName} is speaking`
+          : "Listening to you"
+        : phase === "ended"
+          ? "Interview finished"
+          : "Not started";
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-canvas/85 px-4 backdrop-blur sm:px-6">
-        <Logo />
-        <div className="flex items-center gap-2">
-          <span className="hidden text-sm text-ink-muted sm:inline">{userName}</span>
-          <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
+      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Back to home"
+            className="grid size-10 place-items-center rounded-full border border-white/10 text-ink-muted transition-colors hover:border-white/20 hover:text-ink"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+          </Link>
+          <Logo className="hidden sm:inline-flex" />
+        </div>
+        <InterviewerToggle value={interviewerId} onChange={setInterviewerId} disabled={busy} />
+        <div className="flex items-center gap-1">
+          <span className="hidden pr-2 text-sm text-ink-muted md:inline">{userName}</span>
+          <Button variant="ghost" size="icon" onClick={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
             <LogOut aria-hidden />
-            Sign out
           </Button>
         </div>
       </header>
 
-      <main className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <section aria-label="Interviewer" className="relative min-h-[52dvh] lg:min-h-0">
-          <div className="lg:absolute lg:inset-0">
-            <AvatarStage
-              interviewer={interviewer}
-              audio={audio}
-              status={stageStatus}
-              caption={connected ? latestInterviewerLine?.text : undefined}
-            />
-          </div>
-        </section>
-
-        <aside className="flex min-h-0 flex-col border-t bg-surface lg:h-[calc(100dvh-4rem)] lg:border-l lg:border-t-0">
-          <div className="grid gap-5 border-b p-5 sm:p-6">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">Interviewer</h1>
-              <div role="radiogroup" aria-label="Choose interviewer" className="mt-3 grid grid-cols-2 gap-2">
-                {interviewerIds.map((id) => {
-                  const item = interviewers[id];
-                  const selected = id === interviewerId;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      disabled={busy}
-                      onClick={() => setInterviewerId(id)}
-                      className={cn(
-                        "rounded-panel border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-                        selected ? "border-accent bg-accent/10" : "hover:bg-surface-raised"
-                      )}
-                    >
-                      <span className="block text-sm font-medium">{item.name}</span>
-                      <span className="mt-0.5 block text-xs leading-snug text-ink-muted">{item.summary}</span>
-                    </button>
-                  );
-                })}
+      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-4 p-4 sm:gap-5 sm:p-6 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+        <aside className="order-2 flex min-h-0 flex-col rounded-2xl border border-white/[0.08] bg-surface lg:order-1 lg:h-[calc(100dvh-7rem)]">
+          <div className="grid gap-5 border-b border-white/[0.06] p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium text-ink-muted">Your interviewer</p>
+                <h1 className="mt-1 bg-accent-gradient bg-clip-text text-[1.7rem] font-semibold leading-tight tracking-tight text-transparent">
+                  {interviewer.displayName}
+                </h1>
+                <p className="mt-1 text-sm text-ink-muted">{interviewer.summary}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => setMuted(!isMuted)}
+                  disabled={!connected}
+                  aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+                  aria-pressed={isMuted}
+                >
+                  {isMuted ? <MicOff aria-hidden /> : <Mic aria-hidden />}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={toggleSpeaker}
+                  aria-label={speakerMuted ? "Unmute interviewer" : "Mute interviewer"}
+                  aria-pressed={speakerMuted}
+                >
+                  {speakerMuted ? <VolumeX aria-hidden /> : <Volume2 aria-hidden />}
+                </Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm" aria-live="polite">
+              <span
+                aria-hidden
+                className={cn(
+                  "size-2 rounded-full",
+                  connected ? (isSpeaking ? "animate-pulse bg-accent" : "bg-emerald-400") : "bg-slate-600"
+                )}
+              />
+              <span className={connected ? "text-ink" : "text-ink-muted"}>{statusText}</span>
+            </p>
+
+            <div className="grid gap-2.5">
               {connected ? (
-                <Button variant="danger" size="lg" className="flex-1" onClick={() => conversation.endSession()}>
+                <Button variant="danger" size="lg" onClick={() => conversation.endSession()}>
                   <PhoneOff aria-hidden />
                   End interview
                 </Button>
               ) : (
-                <Button size="lg" className="flex-1" onClick={start} disabled={phase === "connecting"}>
+                <Button size="lg" onClick={start} disabled={phase === "connecting"}>
                   {phase === "connecting" ? <Loader2 className="animate-spin" aria-hidden /> : <Mic aria-hidden />}
-                  {phase === "connecting" ? "Connecting" : phase === "ended" ? "Start again" : "Start interview"}
+                  {phase === "connecting" ? "Connecting" : phase === "ended" ? "Start a new interview" : "Start interview"}
                 </Button>
               )}
               <Button
                 variant="secondary"
-                size="icon"
-                className="size-12"
-                onClick={() => setMuted(!isMuted)}
-                disabled={!connected}
-                aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
-                aria-pressed={isMuted}
+                size="lg"
+                onClick={() => setFeedbackOpen(true)}
+                disabled={phase !== "ended" || saveState.status === "idle"}
               >
-                {isMuted ? <MicOff aria-hidden /> : <Mic aria-hidden />}
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="size-12"
-                onClick={toggleSpeaker}
-                aria-label={speakerMuted ? "Unmute interviewer" : "Mute interviewer"}
-                aria-pressed={speakerMuted}
-              >
-                {speakerMuted ? <VolumeX aria-hidden /> : <Volume2 aria-hidden />}
+                {saveState.status === "saving" ? <Loader2 className="animate-spin" aria-hidden /> : <FileText aria-hidden />}
+                Show feedback
               </Button>
             </div>
 
             {error && (
-              <p role="alert" className="rounded-field border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+              <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-rose-200">
                 {error}
               </p>
             )}
           </div>
 
-          {phase === "ended" && (
-            <div role="tablist" aria-label="Session results" className="mx-5 mt-5 grid grid-cols-2 rounded-full border bg-canvas p-1 sm:mx-6">
-              {(["report", "transcript"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === item}
-                  onClick={() => setTab(item)}
-                  className={cn(
-                    "h-8 rounded-full text-sm font-medium capitalize transition-colors",
-                    tab === item ? "bg-surface-raised text-ink" : "text-ink-muted hover:text-ink"
-                  )}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="min-h-[240px] flex-1 overflow-y-auto px-5 sm:px-6">
-            {phase === "ended" && tab === "report" ? (
-              <div className="py-6">
-                {saveState.status === "saving" && (
-                  <div className="grid gap-4" aria-live="polite" aria-busy>
-                    <p className="text-sm text-ink-muted">Analysing your answers</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      {[0, 1, 2, 3].map((key) => (
-                        <div key={key} className="h-12 animate-pulse rounded-field bg-surface-raised" />
-                      ))}
-                    </div>
-                    <div className="h-24 animate-pulse rounded-field bg-surface-raised" />
-                  </div>
-                )}
-                {saveState.status === "error" && (
-                  <div className="grid gap-3">
-                    <p role="alert" className="text-sm text-danger">
-                      {saveState.message}
-                    </p>
-                    <Button variant="secondary" size="sm" className="justify-self-start" onClick={() => void saveSession()}>
-                      Try again
-                    </Button>
-                  </div>
-                )}
-                {saveState.status === "skipped" && (
-                  <div className="grid gap-2">
-                    <p className="text-sm font-medium">No answers recorded</p>
-                    <p className="text-sm leading-relaxed text-ink-muted">
-                      The session ended before you answered, so there is nothing to analyse and nothing was saved.
-                    </p>
-                  </div>
-                )}
-                {saveState.status === "saved" && saveState.report && <ReportView report={saveState.report} compact />}
-              </div>
-            ) : (
-              <>
-                <Transcript lines={lines} interviewerName={interviewer.name} follow={connected} />
-                {!busy && phase !== "ended" && <SessionHistory sessions={history} />}
-              </>
-            )}
+          <div className="min-h-[220px] flex-1 overflow-y-auto px-5 sm:px-6">
+            <Transcript lines={lines} interviewerName={interviewer.displayName} follow={connected} />
+            {!busy && lines.length === 0 && <SessionHistory sessions={history} />}
           </div>
         </aside>
+
+        <section
+          aria-label={interviewer.displayName}
+          className="relative order-1 min-h-[58dvh] overflow-hidden rounded-2xl border border-white/[0.08] bg-surface lg:order-2 lg:h-[calc(100dvh-7rem)] lg:min-h-0"
+        >
+          <AvatarStage interviewer={interviewer} audio={audio} greet={phase === "ready"} />
+        </section>
       </main>
+
+      <FeedbackDialog
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        state={saveState}
+        interviewerName={interviewers[sessionInterviewer.current].displayName}
+        onRetry={() => void saveSession()}
+      />
     </div>
   );
 }

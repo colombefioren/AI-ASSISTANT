@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SyllableSynth, VISEMES, analyse, visemesFromFeatures } from "./lipsync";
+import { SyllableEnvelope, SyllableSynth, VISEMES, analyse, visemesFromFeatures } from "./lipsync";
 
 /** Builds a 100-8000 Hz spectrum with energy in the given frequency bands. */
 function spectrum(bands: [fromHz: number, toHz: number, level: number][], size = 256) {
@@ -51,5 +51,25 @@ describe("lip sync heuristics", () => {
       expect(loudness).toBeLessThanOrEqual(0.5);
       for (const v of VISEMES) expect(weights[v]).toBeLessThanOrEqual(1);
     }
+  });
+
+  it("closes the mouth on dips between syllables even when energy never reaches zero", () => {
+    const envelope = new SyllableEnvelope();
+    const dt = 1 / 60;
+    const openings: number[] = [];
+    // Smoothed speech energy: 4.5 syllables per second between 0.18 and 0.3.
+    for (let frame = 0; frame < 180; frame++) {
+      const t = frame * dt;
+      const energy = 0.24 + 0.06 * Math.sin(2 * Math.PI * 4.5 * t);
+      openings.push(envelope.step(energy, dt));
+    }
+    const settled = openings.slice(60);
+    expect(Math.min(...settled)).toBeLessThan(0.15);
+    expect(Math.max(...settled)).toBeGreaterThan(0.75);
+  });
+
+  it("stays closed in silence", () => {
+    const envelope = new SyllableEnvelope();
+    for (let i = 0; i < 60; i++) expect(envelope.step(0.01, 1 / 60)).toBe(0);
   });
 });

@@ -1,11 +1,11 @@
 "use client";
 
-import { Component, useCallback, useState, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import type { Interviewer } from "@/lib/interviewers";
 import { cn } from "@/lib/utils";
-import type { AudioBridge, ConversationMode } from "./avatar/types";
+import type { AudioBridge } from "./avatar/types";
 
 const AvatarCanvas = dynamic(() => import("./avatar/AvatarCanvas"), { ssr: false });
 
@@ -22,29 +22,38 @@ class SceneBoundary extends Component<{ children: ReactNode; fallback: ReactNode
   }
 }
 
-const statusCopy: Record<ConversationMode | "connecting", string> = {
-  idle: "Ready when you are",
-  connecting: "Connecting",
-  listening: "Listening",
-  speaking: "Speaking",
-};
-
 interface AvatarStageProps {
   interviewer: Interviewer;
   audio: React.RefObject<AudioBridge>;
-  status: ConversationMode | "connecting";
-  caption?: string;
+  /** Whether the interviewer may greet; false while a session is running. */
+  greet: boolean;
 }
 
-export function AvatarStage({ interviewer, audio, status, caption }: AvatarStageProps) {
+const GREETING = "Hi there! Let's start your interview.";
+
+export function AvatarStage({ interviewer, audio, greet }: AvatarStageProps) {
   const reduceMotion = useReducedMotion() ?? false;
   const [readyFor, setReadyFor] = useState<string | null>(null);
   const handleReady = useCallback(() => setReadyFor(interviewer.id), [interviewer.id]);
   const loading = readyFor !== interviewer.id;
-  const live = status === "listening" || status === "speaking";
+  const bubbleAnchor = useRef<HTMLDivElement>(null);
+
+  // Like the original, the interviewer says hi shortly after appearing and the
+  // bubble then goes away. Switching interviewers greets again.
+  const [greeting, setGreeting] = useState(false);
+  useEffect(() => {
+    setGreeting(false);
+    if (loading || !greet) return;
+    const show = setTimeout(() => setGreeting(true), 1200);
+    const hide = setTimeout(() => setGreeting(false), 7500);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(hide);
+    };
+  }, [loading, greet, interviewer.id]);
 
   return (
-    <div className="relative h-full min-h-[52dvh] overflow-hidden bg-[radial-gradient(120%_80%_at_50%_0%,rgb(var(--surface-raised))_0%,rgb(var(--canvas))_70%)]">
+    <div className="relative h-full min-h-[inherit] bg-gradient-to-b from-surface-raised/70 to-surface">
       <SceneBoundary
         fallback={
           <div className="grid h-full place-items-center px-6 text-center text-sm text-ink-muted">
@@ -53,40 +62,42 @@ export function AvatarStage({ interviewer, audio, status, caption }: AvatarStage
         }
       >
         <div className={cn("absolute inset-0 transition-opacity duration-700 ease-out", loading ? "opacity-0" : "opacity-100")}>
-          <AvatarCanvas interviewer={interviewer} audio={audio} reduceMotion={reduceMotion} onReady={handleReady} />
+          <AvatarCanvas
+            interviewer={interviewer}
+            audio={audio}
+            reduceMotion={reduceMotion}
+            onReady={handleReady}
+            headAnchor={bubbleAnchor}
+          />
         </div>
       </SceneBoundary>
 
       {loading && (
         <div className="absolute inset-0 grid place-items-center" aria-live="polite">
           <div className="flex flex-col items-center gap-4">
-            <div className="size-40 animate-pulse rounded-full bg-surface-raised" />
-            <p className="text-sm text-ink-muted">Bringing {interviewer.name} in</p>
+            <div className="size-36 animate-pulse rounded-full bg-surface-raised" />
+            <p className="text-sm text-ink-muted">Bringing {interviewer.displayName} in</p>
           </div>
         </div>
       )}
 
-      <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border bg-surface/80 px-3 py-1.5 text-xs font-medium backdrop-blur sm:left-6 sm:top-6">
-        <span
-          aria-hidden
-          className={cn(
-            "size-2 rounded-full",
-            live ? "bg-accent" : status === "connecting" ? "animate-pulse bg-ink-muted" : "bg-line",
-            status === "speaking" && "animate-pulse"
-          )}
-        />
-        <span>
-          {interviewer.name}: {statusCopy[status]}
-        </span>
+      {/* Positioned every frame by the avatar so it stays beside the speaker's head.
+          Always mounted so its size is known before it fades in. */}
+      <div
+        ref={bubbleAnchor}
+        aria-hidden={!greeting}
+        className="pointer-events-none absolute left-0 top-0 w-max max-w-[min(20rem,calc(100%-2rem))] opacity-0 data-[placed=true]:opacity-100"
+      >
+        <motion.div
+          initial={false}
+          animate={greeting ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: reduceMotion ? 0 : 8, scale: reduceMotion ? 1 : 0.97 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: "bottom left" }}
+          className="rounded-2xl rounded-bl-none bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-900"
+        >
+          {GREETING}
+        </motion.div>
       </div>
-
-      {caption && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-canvas via-canvas/70 to-transparent px-4 pb-6 pt-16 sm:px-10">
-          <p className="max-w-2xl text-balance text-center text-base leading-relaxed text-ink sm:text-lg" aria-live="polite">
-            {caption}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

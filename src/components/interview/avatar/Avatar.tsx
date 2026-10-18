@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import type { Interviewer } from "@/lib/interviewers";
-import { SyllableSynth, VISEMES, analyse, emptyWeights, visemesFromFeatures } from "./lipsync";
+import { SyllableEnvelope, SyllableSynth, VISEMES, analyse, emptyWeights, visemesFromFeatures } from "./lipsync";
 import { applyModelSpaceOffset, findBone, relaxArms } from "./rig";
 import type { AudioBridge } from "./types";
 
@@ -86,9 +86,16 @@ interface AvatarProps {
   audio: React.RefObject<AudioBridge>;
   reduceMotion: boolean;
   onReady?: () => void;
+  /** Element moved every frame so it sits beside the head, e.g. a speech bubble. */
+  headAnchor?: React.RefObject<HTMLElement | null>;
 }
 
-export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProps) {
+const headPoint = new THREE.Vector3();
+const edgePoint = new THREE.Vector3();
+const HEAD_HALF_WIDTH = new THREE.Vector3(0.1, 0, 0);
+const HEAD_TOP = new THREE.Vector3(0, 0.26, 0);
+
+export function Avatar({ interviewer, audio, reduceMotion, onReady, headAnchor }: AvatarProps) {
   const { scene } = useLoader(GLTFLoader, interviewer.avatarUrl, withMeshopt);
   const model = useMemo(() => prepareModel(scene, interviewer.rig.recolor), [scene, interviewer.rig.recolor]);
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -101,6 +108,7 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
     envSlow: 0,
     userEnv: 0,
     synth: new SyllableSynth(),
+    syllables: new SyllableEnvelope(),
     blinkStart: -1,
     nextBlink: random(1, 3),
     doubleBlink: false,
@@ -115,6 +123,7 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
     brow: 0,
     lastMode: "idle" as AudioBridge["mode"],
     euler: new THREE.Euler(),
+    anchor: new THREE.Vector2(-1, -1),
   });
 
   useEffect(() => {
@@ -130,7 +139,8 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
     const fov = 20;
     const visibleHeight = aspect < 0.85 ? 1.05 : 0.86;
     const distance = visibleHeight / 2 / Math.tan(degToRad(fov / 2));
-    const target = head.clone().add(new THREE.Vector3(0, -0.12, 0));
+    // Portrait screens keep more space above the head for the greeting bubble.
+    const target = head.clone().add(new THREE.Vector3(0, aspect < 0.85 ? -0.06 : -0.12, 0));
     camera.fov = fov;
     camera.position.set(target.x, target.y + 0.02, target.z + distance);
     camera.lookAt(target);
@@ -160,7 +170,7 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
       const hasSpectrum = data !== null && data.some((value) => value > 0);
       if (hasSpectrum) {
         const features = analyse(data);
-        loudness = clamp(features.energy * 1.9, 0, 1);
+        loudness = s.syllables.step(features.energy, dt);
         openness = features.openness;
         target = visemesFromFeatures(features, loudness);
       } else {
@@ -170,13 +180,15 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
       }
     }
 
-    // Mouths open faster than they close; this asymmetry reads as speech
-    // rather than flapping.
-    s.env = damp(s.env, loudness, loudness > s.env ? 26 : 11, dt);
+    if (!speaking) s.syllables.reset();
+
+    // Mouths open a little faster than they close; this asymmetry reads as
+    // speech rather than flapping, while closures stay visible.
+    s.env = damp(s.env, loudness, loudness > s.env ? 28 : 18, dt);
     s.envSlow = damp(s.envSlow, loudness, 1.6, dt);
     for (const v of VISEMES) {
       const goal = target[v] * interviewer.rig.visemeGain;
-      s.visemes[v] = damp(s.visemes[v], goal, goal > s.visemes[v] ? 30 : 15, dt);
+      s.visemes[v] = damp(s.visemes[v], goal, goal > s.visemes[v] ? 30 : 20, dt);
       setMorph(`viseme_${v}`, s.visemes[v]);
     }
     const jawGoal = s.env * interviewer.rig.jawGain * (0.45 + 0.55 * openness);
@@ -295,6 +307,43 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady }: AvatarProp
     setMorph("browInnerUp", 0.04 + s.brow);
     setMorph("browOuterUpLeft", s.brow * 0.6);
     setMorph("browOuterUpRight", s.brow * 0.6);
+  });
+
+  // Pin the anchor element to the top-right of the head in screen space.
+  useFrame(({ camera: frameCamera, size: frameSize }, delta) => {
+    const element = headAnchor?.current;
+    if (!element || !model.head) return;
+    model.head.getWorldPosition(headPoint);
+    const toX = (ndc: number) => ((ndc + 1) / 2) * frameSize.width;
+    const toY = (ndc: number) => ((1 - ndc) / 2) * frameSize.height;
+    const topY = toY(edgePoint.copy(headPoint).add(HEAD_TOP).project(frameCamera).y);
+    headPoint.y += 0.1;
+    edgePoint.copy(headPoint).add(HEAD_HALF_WIDTH).project(frameCamera);
+    headPoint.project(frameCamera);
+    const centerX = toX(headPoint.x);
+    const radius = Math.abs(toX(edgePoint.x) - centerX);
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+    const margin = 12;
+
+    let goalX: number;
+    let goalY: number;
+    if (centerX + radius * 0.85 + width + margin <= frameSize.width) {
+      // Room on the right: bubble starts beside the head at eye level.
+      goalX = centerX + radius * 0.85;
+      goalY = toY(headPoint.y) + radius * 0.2;
+    } else {
+      // Narrow stage: sit above the head instead of covering the face.
+      goalX = Math.min(Math.max(centerX - width / 2, margin), frameSize.width - width - margin);
+      goalY = topY - 8;
+    }
+    goalY = Math.max(goalY, height + margin);
+
+    const anchor = state.current.anchor;
+    if (anchor.x < 0) anchor.set(goalX, goalY);
+    anchor.set(damp(anchor.x, goalX, 6, delta), damp(anchor.y, goalY, 6, delta));
+    element.style.transform = `translate3d(${anchor.x.toFixed(1)}px, ${anchor.y.toFixed(1)}px, 0) translateY(-100%)`;
+    element.dataset.placed = "true";
   });
 
   return <primitive object={scene} />;

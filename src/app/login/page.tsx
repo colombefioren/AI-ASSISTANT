@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Logo } from "@/components/ui/Logo";
+import { ArrowLeft } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { AuthForm } from "./AuthForm";
 
@@ -29,34 +30,42 @@ export default async function LoginPage({
   const initialMode = params.mode === "register" ? "register" : "signin";
 
   return (
-    <main className="grid min-h-[100dvh] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <section className="flex flex-col px-4 py-6 sm:px-10 lg:px-16">
-        <Logo />
-        <div className="flex flex-1 items-center py-12">
-          <div className="w-full max-w-sm">
-            <AuthForm initialMode={initialMode} callbackUrl={callbackUrl} />
+    <main className="relative flex min-h-[100dvh] flex-col items-center px-4 py-6 sm:py-10">
+      <div className="flex w-full max-w-md items-center justify-between">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Home
+        </Link>
+      </div>
+
+      <div className="flex w-full flex-1 flex-col items-center justify-center py-8">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex -space-x-3">
+            {(["coco", "mimi"] as const).map((id) => (
+              <span key={id} className="relative size-11 overflow-hidden rounded-full bg-surface-raised ring-2 ring-canvas">
+                <Image
+                  src={`/images/portrait-${id}.webp`}
+                  alt=""
+                  width={880}
+                  height={id === "coco" ? 1416 : 1202}
+                  sizes="44px"
+                  className="absolute left-1/2 top-[-3px] w-[175%] max-w-none -translate-x-1/2"
+                />
+              </span>
+            ))}
           </div>
+          <p className="text-sm text-ink-muted">Ms. Coco and Mr. Mimi are ready when you are.</p>
         </div>
-      </section>
-      <aside className="relative hidden overflow-hidden border-l bg-surface-raised bg-[radial-gradient(80%_60%_at_70%_100%,rgb(var(--accent)/0.2),transparent_70%)] lg:block">
-        <Image
-          src="/images/portrait-mimi.webp"
-          alt=""
-          width={880}
-          height={1202}
-          priority
-          sizes="40vw"
-          className="absolute -right-10 bottom-0 h-[78%] w-auto object-contain object-bottom"
-        />
-        <div className="absolute left-12 top-16 max-w-sm">
-          <p className="text-2xl font-medium leading-snug tracking-tight text-ink">
-            Say your answers out loud before the real thing. You will hear what works.
-          </p>
-          <p className="mt-4 text-sm text-ink-muted">
-            Practice with Coco or Mimi, two voice interviewers that ask follow-up questions.
-          </p>
-        </div>
-      </aside>
+
+        <AuthForm initialMode={initialMode} callbackUrl={callbackUrl} />
+
+        <p className="mt-6 text-center text-xs text-ink-muted">
+          Practice out loud with an AI interviewer and get feedback the moment you finish.
+        </p>
+      </div>
     </main>
   );
 }

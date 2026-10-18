@@ -23,7 +23,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
   const record = await findSession(Number(session.user.id), id);
   if (!record) notFound();
 
-  const name = isInterviewerId(record.interviewer) ? interviewers[record.interviewer].name : "Interviewer";
+  const name = isInterviewerId(record.interviewer) ? interviewers[record.interviewer].displayName : "Interviewer";
 
   return (
     <div className="min-h-[100dvh]">

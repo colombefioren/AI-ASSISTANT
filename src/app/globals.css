@@ -9,32 +9,19 @@
 */
 
 @layer base {
+  /* Original palette: deep slate with a sky-to-blue accent. Dark only. */
   :root {
-    --canvas: 246 247 245;
-    --surface: 252 252 251;
-    --surface-raised: 237 240 236;
-    --line: 220 224 219;
-    --ink: 21 24 22;
-    --ink-muted: 86 94 89;
-    --accent: 21 122 71;
-    --accent-ink: 246 250 247;
-    --danger: 185 38 50;
-    color-scheme: light;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --canvas: 13 15 14;
-      --surface: 21 24 22;
-      --surface-raised: 30 34 31;
-      --line: 44 49 46;
-      --ink: 234 237 234;
-      --ink-muted: 152 161 155;
-      --accent: 98 211 145;
-      --accent-ink: 8 28 17;
-      --danger: 248 113 113;
-      color-scheme: dark;
-    }
+    --canvas: 9 14 28;
+    --surface: 15 23 42;
+    --surface-raised: 26 36 58;
+    --line: 39 51 77;
+    --ink: 241 245 249;
+    --ink-muted: 148 163 184;
+    --accent: 56 189 248;
+    --accent-deep: 59 130 246;
+    --accent-ink: 3 18 38;
+    --danger: 244 63 94;
+    color-scheme: dark;
   }
 
   * {
@@ -51,7 +38,8 @@
   }
 
   ::selection {
-    background: rgb(var(--accent) / 0.25);
+    background: rgb(var(--accent) / 0.3);
+    color: rgb(var(--ink));
   }
 
   :focus-visible {
@@ -61,6 +49,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .group:hover .group-hover\:-rotate-6 {
+    transform: none;
+  }
+
   *,
   *::before,
   *::after {
@@ -80,4 +72,53 @@
 .js-reveal [data-reveal="stagger"] > * {
   opacity: 0;
   transform: translateY(24px);
+}
+
+
+/* Gentle voice meter used on the landing page. */
+@keyframes voice {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voice-bar {
+    animation: voice 1.1s ease-in-out infinite;
+    transform-origin: center;
+  }
+}
+
+/* Slim scrollbars that match the slate palette. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: rgb(var(--line));
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--ink-muted) / 0.6);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
