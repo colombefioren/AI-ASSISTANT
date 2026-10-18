@@ -11,9 +11,10 @@ interface AvatarCanvasProps {
   audio: React.RefObject<AudioBridge>;
   reduceMotion: boolean;
   onReady?: () => void;
+  headAnchor?: React.RefObject<HTMLElement | null>;
 }
 
-export default function AvatarCanvas({ interviewer, audio, reduceMotion, onReady }: AvatarCanvasProps) {
+export default function AvatarCanvas({ interviewer, audio, reduceMotion, onReady, headAnchor }: AvatarCanvasProps) {
   useEffect(() => {
     // Warm the cache for every avatar so switching interviewers is instant.
     interviewerIds.forEach((id) => preloadAvatar(interviewers[id].avatarUrl));
@@ -32,7 +33,7 @@ export default function AvatarCanvas({ interviewer, audio, reduceMotion, onReady
       <directionalLight position={[-2.2, 1.4, 1.2]} intensity={0.55} />
       <directionalLight position={[0, 2.2, -2.6]} intensity={1.1} />
       <Suspense fallback={null}>
-        <Avatar key={interviewer.id} interviewer={interviewer} audio={audio} reduceMotion={reduceMotion} onReady={onReady} />
+        <Avatar key={interviewer.id} interviewer={interviewer} audio={audio} reduceMotion={reduceMotion} onReady={onReady} headAnchor={headAnchor} />
       </Suspense>
     </Canvas>
   );

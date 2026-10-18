@@ -206,14 +206,7 @@ function Room({ userName, initialHistory }: RoomProps) {
 
   const toggleSpeaker = () => setSpeakerMuted((muted) => !muted);
 
-  const latestInterviewerLine = [...lines].reverse().find((line) => line.speaker === "interviewer");
   const busy = phase === "connecting" || connected;
-  const bubble = connected
-    ? latestInterviewerLine?.text
-    : phase === "ready" && lines.length === 0
-      ? "Hi there! Let's start your interview."
-      : undefined;
-
   const statusText =
     phase === "connecting"
       ? "Connecting"
@@ -332,7 +325,7 @@ function Room({ userName, initialHistory }: RoomProps) {
           aria-label={interviewer.displayName}
           className="relative order-1 min-h-[58dvh] overflow-hidden rounded-2xl border border-white/[0.08] bg-surface lg:order-2 lg:h-[calc(100dvh-7rem)] lg:min-h-0"
         >
-          <AvatarStage interviewer={interviewer} audio={audio} bubble={bubble} />
+          <AvatarStage interviewer={interviewer} audio={audio} greet={phase === "ready"} />
         </section>
       </main>
 
