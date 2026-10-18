@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import animate from "tailwindcss-animate";
 
 // Colors resolve to CSS variables in globals.css so light and dark
 // themes switch automatically with prefers-color-scheme.
@@ -40,5 +39,5 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [],
 } satisfies Config;
