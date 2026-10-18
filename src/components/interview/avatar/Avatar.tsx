@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import type { Interviewer } from "@/lib/interviewers";
-import { SyllableSynth, VISEMES, analyse, emptyWeights, visemesFromFeatures } from "./lipsync";
+import { SyllableEnvelope, SyllableSynth, VISEMES, analyse, emptyWeights, visemesFromFeatures } from "./lipsync";
 import { applyModelSpaceOffset, findBone, relaxArms } from "./rig";
 import type { AudioBridge } from "./types";
 
@@ -108,6 +108,7 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady, headAnchor }
     envSlow: 0,
     userEnv: 0,
     synth: new SyllableSynth(),
+    syllables: new SyllableEnvelope(),
     blinkStart: -1,
     nextBlink: random(1, 3),
     doubleBlink: false,
@@ -169,7 +170,7 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady, headAnchor }
       const hasSpectrum = data !== null && data.some((value) => value > 0);
       if (hasSpectrum) {
         const features = analyse(data);
-        loudness = clamp(features.energy * 1.9, 0, 1);
+        loudness = s.syllables.step(features.energy, dt);
         openness = features.openness;
         target = visemesFromFeatures(features, loudness);
       } else {
@@ -179,13 +180,15 @@ export function Avatar({ interviewer, audio, reduceMotion, onReady, headAnchor }
       }
     }
 
-    // Mouths open faster than they close; this asymmetry reads as speech
-    // rather than flapping.
-    s.env = damp(s.env, loudness, loudness > s.env ? 26 : 11, dt);
+    if (!speaking) s.syllables.reset();
+
+    // Mouths open a little faster than they close; this asymmetry reads as
+    // speech rather than flapping, while closures stay visible.
+    s.env = damp(s.env, loudness, loudness > s.env ? 28 : 18, dt);
     s.envSlow = damp(s.envSlow, loudness, 1.6, dt);
     for (const v of VISEMES) {
       const goal = target[v] * interviewer.rig.visemeGain;
-      s.visemes[v] = damp(s.visemes[v], goal, goal > s.visemes[v] ? 30 : 15, dt);
+      s.visemes[v] = damp(s.visemes[v], goal, goal > s.visemes[v] ? 30 : 20, dt);
       setMorph(`viseme_${v}`, s.visemes[v]);
     }
     const jawGoal = s.env * interviewer.rig.jawGain * (0.45 + 0.55 * openness);

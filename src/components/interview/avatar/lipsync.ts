@@ -88,9 +88,41 @@ export function visemesFromFeatures(f: SpectralFeatures, loudness: number): Vise
   }
   if (total <= 0) return w;
 
-  const intensity = clamp01(loudness * 2.2);
+  const intensity = clamp01(loudness * 1.15);
   for (const v of VISEMES) w[v] = (scores[v] / total) * intensity;
   return w;
+}
+
+/**
+ * Turns raw voice energy into a per-syllable mouth opening.
+ *
+ * The SDK's analyser smooths its spectrum over time, so absolute energy barely
+ * dips between syllables and a fixed threshold leaves the mouth hanging open.
+ * Tracking the recent minimum and maximum and normalising between them makes
+ * every dip read as a closure and every stressed syllable as a full opening.
+ */
+export class SyllableEnvelope {
+  private low = 0;
+  private high = 0.1;
+
+  step(energy: number, dt: number): number {
+    // Fast to follow new extremes, slow to forget them (about half a second).
+    this.low = energy < this.low ? energy : this.low + (energy - this.low) * Math.min(1, dt * 2.5);
+    this.high = energy > this.high ? energy : this.high - (this.high - energy) * Math.min(1, dt * 1.2);
+    if (energy < 0.025) return 0;
+
+    const range = Math.max(this.high - this.low, 0.04);
+    const relative = clamp01((energy - this.low) / range);
+    // Ease in so small wobbles stay closed and real syllables open clearly.
+    const shaped = relative * relative * (3 - 2 * relative);
+    const presence = clamp01(energy * 8);
+    return shaped * presence;
+  }
+
+  reset() {
+    this.low = 0;
+    this.high = 0.1;
+  }
 }
 
 /**
