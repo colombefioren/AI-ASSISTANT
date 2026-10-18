@@ -5,7 +5,6 @@ import type { Config } from "tailwindcss";
 const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
-  darkMode: "media",
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
@@ -22,6 +21,7 @@ export default {
         },
         accent: {
           DEFAULT: token("accent"),
+          deep: token("accent-deep"),
           ink: token("accent-ink"),
         },
         danger: token("danger"),
@@ -33,6 +33,9 @@ export default {
       borderRadius: {
         panel: "1rem",
         field: "0.75rem",
+      },
+      backgroundImage: {
+        "accent-gradient": "linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--accent-deep)) 100%)",
       },
       transitionTimingFunction: {
         out: "cubic-bezier(0.16, 1, 0.3, 1)",

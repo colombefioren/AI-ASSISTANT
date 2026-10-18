@@ -9,32 +9,19 @@
 */
 
 @layer base {
+  /* Original palette: deep slate with a sky-to-blue accent. Dark only. */
   :root {
-    --canvas: 246 247 245;
-    --surface: 252 252 251;
-    --surface-raised: 237 240 236;
-    --line: 220 224 219;
-    --ink: 21 24 22;
-    --ink-muted: 86 94 89;
-    --accent: 21 122 71;
-    --accent-ink: 246 250 247;
-    --danger: 185 38 50;
-    color-scheme: light;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --canvas: 13 15 14;
-      --surface: 21 24 22;
-      --surface-raised: 30 34 31;
-      --line: 44 49 46;
-      --ink: 234 237 234;
-      --ink-muted: 152 161 155;
-      --accent: 98 211 145;
-      --accent-ink: 8 28 17;
-      --danger: 248 113 113;
-      color-scheme: dark;
-    }
+    --canvas: 9 14 28;
+    --surface: 15 23 42;
+    --surface-raised: 26 36 58;
+    --line: 39 51 77;
+    --ink: 241 245 249;
+    --ink-muted: 148 163 184;
+    --accent: 56 189 248;
+    --accent-deep: 59 130 246;
+    --accent-ink: 3 18 38;
+    --danger: 244 63 94;
+    color-scheme: dark;
   }
 
   * {
@@ -51,7 +38,8 @@
   }
 
   ::selection {
-    background: rgb(var(--accent) / 0.25);
+    background: rgb(var(--accent) / 0.3);
+    color: rgb(var(--ink));
   }
 
   :focus-visible {
