@@ -19,8 +19,11 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
 
-        const limit = rateLimit(`signin:${clientIp(req.headers ?? {})}:${email}`, 8, 15 * 60 * 1000);
-        if (!limit.ok) throw new Error("RateLimited");
+        // Per-IP limit slows credential stuffing; per-account limit protects one
+        // account even when the attacker rotates IPs.
+        const ipLimit = rateLimit(`signin-ip:${clientIp(req.headers ?? {})}`, 20, 15 * 60 * 1000);
+        const accountLimit = rateLimit(`signin-account:${email}`, 8, 15 * 60 * 1000);
+        if (!ipLimit.ok || !accountLimit.ok) throw new Error("RateLimited");
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
