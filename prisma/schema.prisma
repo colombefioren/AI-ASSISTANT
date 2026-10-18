@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model userinfo {
+model User {
   id        Int       @id @default(autoincrement())
   name      String    @db.VarChar(255)
   email     String    @unique @db.VarChar(255)
@@ -15,4 +15,5 @@ model userinfo {
   createdAt DateTime? @default(now()) @db.Timestamptz(6)
 
   @@index([email], map: "User_email_idx")
+  @@map("userinfo")
 }
