@@ -11,5 +11,5 @@ compression). Geometry, rig and blend shapes are unchanged.
 | `mimi.glb` | `avatars/avatarsdk.glb` | Avatar SDK (MetaPerson Creator) | Non-commercial use only |
 
 Both licenses allow non-commercial use only. Replace these files with avatars you
-have commercial rights to before using Greenroom commercially. Any replacement
+have commercial rights to before using AI Interview Coach commercially. Any replacement
 needs a Mixamo-compatible skeleton plus ARKit and Oculus viseme blend shapes.

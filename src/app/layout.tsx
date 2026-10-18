@@ -17,12 +17,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: `${brand.name} | Mock interviews with a 3D AI interviewer`,
-    template: `%s | ${brand.name}`,
+    default: `${brand.fullName} | Practice interviews with AI`,
+    template: `%s | ${brand.fullName}`,
   },
   description: brand.description,
   keywords: ["mock interview", "interview practice", "AI interviewer", "job interview", "career"],
-  applicationName: brand.name,
+  applicationName: brand.fullName,
 };
 
 export const viewport: Viewport = {

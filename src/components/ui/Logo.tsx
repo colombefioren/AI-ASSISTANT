@@ -4,8 +4,8 @@ import { brand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 /**
- * Greenroom mark: a speech bubble shaped like a G whose crossbar is a voice
- * waveform. Kept in sync with src/app/icon.svg.
+ * AIC mark: a speech bubble drawn as an open C (for Coach) with a voice
+ * waveform inside. Kept in sync with src/app/icon.svg.
  */
 export function LogoMark({ className }: { className?: string }) {
   const id = useId();
@@ -42,13 +42,15 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      aria-label={`${brand.name} home`}
-      className={cn("group inline-flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-ink", className)}
+      aria-label={`${brand.fullName} home`}
+      className={cn("group inline-flex items-center gap-2.5 text-ink", className)}
     >
       <LogoMark className="transition-transform duration-300 ease-out group-hover:-rotate-6" />
-      <span>
-        Green<span className="text-accent">room</span>
+      <span className="text-[19px] font-bold tracking-[-0.03em]">
+        AI<span className="text-accent">C</span>
       </span>
+      <span aria-hidden className="hidden h-4 w-px bg-white/15 md:block" />
+      <span className="hidden text-[13px] font-medium text-ink-muted md:block">{brand.fullName}</span>
     </Link>
   );
 }

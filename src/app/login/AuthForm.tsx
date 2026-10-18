@@ -174,7 +174,7 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
         </form>
 
         <p className="mt-7 text-center text-sm text-ink-muted">
-          {isRegister ? "Already have an account?" : "New to Greenroom?"}{" "}
+          {isRegister ? "Already have an account?" : "New to AI Interview Coach?"}{" "}
           <button
             type="button"
             onClick={() => switchMode(isRegister ? "signin" : "register")}

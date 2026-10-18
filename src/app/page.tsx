@@ -103,7 +103,7 @@ function Hero() {
         <div className="relative aspect-[4/5] overflow-hidden rounded-panel border bg-[radial-gradient(90%_70%_at_50%_100%,rgb(var(--accent)/0.22),transparent_70%)] bg-surface-raised">
           <Image
             src="/images/portrait-coco.webp"
-            alt="Coco, one of the Greenroom interviewers, a 3D character with dark hair and glasses"
+            alt="Ms. Coco, one of the AI Interview Coach interviewers, a 3D character with dark hair and glasses"
             width={880}
             height={1416}
             priority
@@ -189,7 +189,7 @@ function RoomPreview() {
         <ThemedImage
           light="/images/room-light.webp"
           dark="/images/room-dark.webp"
-          alt="The Greenroom interview room with Coco on the left and the interviewer picker, controls and past sessions on the right"
+          alt="The AI Interview Coach interview room with Coco on the left and the interviewer picker, controls and past sessions on the right"
           width={1800}
           height={1125}
           sizes="(min-width: 1280px) 1232px, 100vw"
