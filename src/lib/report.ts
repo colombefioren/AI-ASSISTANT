@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { InterviewLanguage } from "@/lib/languages";
 
 export const transcriptLineSchema = z.object({
   id: z.string().max(120),
@@ -11,6 +12,8 @@ export type TranscriptLine = z.infer<typeof transcriptLineSchema>;
 
 export interface SessionReport {
   version: 1;
+  /** Language the answers were analysed in; reports saved before this field were English. */
+  language?: InterviewLanguage;
   durationSec: number;
   answers: number;
   candidateWords: number;
@@ -27,18 +30,53 @@ export interface SessionReport {
   improvements: string[];
 }
 
-const FILLERS = ["um", "uh", "erm", "like", "you know", "basically", "actually", "kind of", "sort of", "i mean", "literally"];
-const HEDGES = ["i think", "i guess", "maybe", "probably", "i'm not sure", "i don't know", "kind of", "sort of"];
-// Words and patterns that usually signal a result in a STAR-style answer.
-const OUTCOME =
-  /\d+(?:\.\d+)?\s?(?:%|(?:percent|x|k|users|customers|hours|days|weeks|months)\b)|\b(?:result(?:ed)?|increas\w*|reduc\w*|improv\w*|sav(?:ed|ing)|grew|grow\w*|cut|launch\w*|deliver\w*|led to|so that|outcome|impact)\b/i;
+interface Lexicon {
+  fillers: string[];
+  hedges: string[];
+  /** Words and patterns that usually signal a result in a STAR-style answer. */
+  outcome: RegExp;
+  self: string[];
+  team: string[];
+  selfLabel: string;
+  teamLabel: string;
+  hedgeExamples: string;
+}
+
+const LEXICONS: Record<InterviewLanguage, Lexicon> = {
+  en: {
+    fillers: ["um", "uh", "erm", "like", "you know", "basically", "actually", "kind of", "sort of", "i mean", "literally"],
+    hedges: ["i think", "i guess", "maybe", "probably", "i'm not sure", "i don't know", "kind of", "sort of"],
+    outcome:
+      /\d+(?:\.\d+)?\s?(?:%|(?:percent|x|k|users|customers|hours|days|weeks|months)\b)|\b(?:result(?:ed)?|increas\w*|reduc\w*|improv\w*|sav(?:ed|ing)|grew|grow\w*|cut|launch\w*|deliver\w*|led to|so that|outcome|impact)\b/i,
+    self: ["i", "my"],
+    team: ["we", "our"],
+    selfLabel: '"I"',
+    teamLabel: '"we"',
+    hedgeExamples: '"I think", "maybe"',
+  },
+  fr: {
+    fillers: ["euh", "heu", "bah", "ben", "genre", "du coup", "en fait", "voilà", "tu vois", "vous voyez", "disons", "bref"],
+    hedges: ["je pense", "je crois", "peut-être", "je suppose", "je ne sais pas", "je sais pas", "plus ou moins", "un peu"],
+    outcome:
+      /\d+(?:[.,]\d+)?\s?(?:%|(?:pour\s?cent|utilisateurs|clients|heures|jours|semaines|mois)(?![\p{L}\p{N}]))|(?<![\p{L}\p{N}])(?:résultats?|augment\p{L}*|rédui\p{L}*|réduction|amélior\p{L}*|économis\p{L}*|lanc\p{L}*|livr\p{L}*|gagn\p{L}*|ce qui a permis|grâce à|impact)(?![\p{L}\p{N}])/iu,
+    self: ["je", "j'", "moi", "mon", "ma", "mes"],
+    team: ["nous", "on", "notre", "nos"],
+    selfLabel: '"je"',
+    teamLabel: '"nous" or "on"',
+    hedgeExamples: '"je pense", "peut-être"',
+  },
+};
+
 const SUBSTANTIVE_WORDS = 25;
 
-const words = (text: string) => text.toLowerCase().match(/[a-z0-9'%]+/g) ?? [];
+const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}'’%]+/gu) ?? [];
 
 function countPhrase(text: string, phrase: string) {
-  const pattern = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
-  return text.match(pattern)?.length ?? 0;
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Letter-aware boundaries so accented words and elisions like "j'" match.
+  const tail = phrase.endsWith("'") ? "" : "(?![\\p{L}\\p{N}])";
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}${tail}`, "giu");
+  return text.replace(/’/g, "'").match(pattern)?.length ?? 0;
 }
 
 // "like" is only a filler when it is not a verb or comparison ("I'd like", "looks like").
@@ -51,7 +89,8 @@ function countFiller(text: string, phrase: string) {
 
 const round = (value: number, digits = 1) => Math.round(value * 10 ** digits) / 10 ** digits;
 
-export function buildReport(lines: TranscriptLine[], durationSec: number): SessionReport {
+export function buildReport(lines: TranscriptLine[], durationSec: number, language: InterviewLanguage = "en"): SessionReport {
+  const lexicon = LEXICONS[language];
   const answers = lines.filter((line) => line.speaker === "candidate");
   const questions = lines.filter((line) => line.speaker === "interviewer");
   const answerText = answers.map((line) => line.text).join(" ");
@@ -61,19 +100,19 @@ export function buildReport(lines: TranscriptLine[], durationSec: number): Sessi
   const avgAnswerWords = answers.length ? candidateWords / answers.length : 0;
   const talkShare = candidateWords + interviewerWords ? candidateWords / (candidateWords + interviewerWords) : 0;
 
-  const fillerCounts = FILLERS.map((phrase) => ({ phrase, count: countFiller(answerText, phrase) }))
+  const fillerCounts = lexicon.fillers.map((phrase) => ({ phrase, count: countFiller(answerText, phrase) }))
     .filter((item) => item.count > 0)
     .sort((a, b) => b.count - a.count);
   const fillerTotal = fillerCounts.reduce((sum, item) => sum + item.count, 0);
   const fillersPer100 = candidateWords ? (fillerTotal / candidateWords) * 100 : 0;
-  const hedges = HEDGES.reduce((sum, phrase) => sum + countPhrase(answerText, phrase), 0);
+  const hedges = lexicon.hedges.reduce((sum, phrase) => sum + countPhrase(answerText, phrase), 0);
 
   const substantive = answers.filter((line) => words(line.text).length >= SUBSTANTIVE_WORDS);
-  const withOutcome = substantive.filter((line) => OUTCOME.test(line.text));
+  const withOutcome = substantive.filter((line) => lexicon.outcome.test(line.text));
   const outcomeRate = substantive.length ? withOutcome.length / substantive.length : 0;
 
-  const iCount = countPhrase(answerText, "i") + countPhrase(answerText, "my");
-  const weCount = countPhrase(answerText, "we") + countPhrase(answerText, "our");
+  const iCount = lexicon.self.reduce((sum, word) => sum + countPhrase(answerText, word), 0);
+  const weCount = lexicon.team.reduce((sum, word) => sum + countPhrase(answerText, word), 0);
   const ownership = iCount + weCount ? iCount / (iCount + weCount) : 0;
 
   const strengths: string[] = [];
@@ -117,12 +156,14 @@ export function buildReport(lines: TranscriptLine[], durationSec: number): Sessi
       if (ownership >= 0.55) {
         strengths.push("You described your own actions clearly instead of hiding behind the team.");
       } else {
-        improvements.push('You said "we" more than "I". Interviewers want to know what you did, so name your own decisions.');
+        improvements.push(
+          `You said ${lexicon.teamLabel} more than ${lexicon.selfLabel}. Interviewers want to know what you did, so name your own decisions.`
+        );
       }
     }
 
     if (hedges >= 4) {
-      improvements.push(`You hedged ${hedges} times ("I think", "maybe"). State what you know plainly.`);
+      improvements.push(`You hedged ${hedges} times (${lexicon.hedgeExamples}). State what you know plainly.`);
     }
 
     if (talkShare >= 0.55) {
@@ -132,6 +173,7 @@ export function buildReport(lines: TranscriptLine[], durationSec: number): Sessi
 
   return {
     version: 1,
+    language,
     durationSec,
     answers: answers.length,
     candidateWords,

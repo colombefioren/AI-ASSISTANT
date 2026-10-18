@@ -183,6 +183,7 @@ function Room({ userName, initialHistory }: RoomProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           interviewer: sessionId,
+          language: sessionLanguage.current,
           durationSec: Math.max(0, Math.round((endedAt.current - startedAt.current) / 1000)),
           transcript: linesRef.current.slice(-400),
         }),
