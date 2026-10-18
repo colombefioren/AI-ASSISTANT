@@ -57,6 +57,9 @@ function Room({ userName, initialHistory }: RoomProps) {
   const interviewer = interviewers[interviewerId];
 
   const conversation = useConversation({
+    // Applied by the SDK once a session exists; calling setVolume before the
+    // connection is created throws.
+    volume: speakerMuted ? 0 : 1,
     onConnect: () => {
       startedAt.current = Date.now();
       setPhase("live");
@@ -144,12 +147,11 @@ function Room({ userName, initialHistory }: RoomProps) {
       const credentials = await response.json();
       if (!response.ok) throw new Error(credentials.error ?? "Could not reach the interviewer.");
       conversation.startSession({ ...credentials, connectionType: "websocket" });
-      if (speakerMuted) conversation.setVolume({ volume: 0 });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not reach the interviewer.");
       setPhase("ready");
     }
-  }, [conversation, interviewerId, speakerMuted]);
+  }, [conversation, interviewerId]);
 
   const saveSession = useCallback(async () => {
     if (!linesRef.current.some((line) => line.speaker === "candidate")) {
@@ -189,11 +191,7 @@ function Room({ userName, initialHistory }: RoomProps) {
     if (phase === "ended") void saveSession();
   }, [phase, saveSession]);
 
-  const toggleSpeaker = () => {
-    const next = !speakerMuted;
-    setSpeakerMuted(next);
-    if (connected) conversation.setVolume({ volume: next ? 0 : 1 });
-  };
+  const toggleSpeaker = () => setSpeakerMuted((muted) => !muted);
 
   const latestInterviewerLine = [...lines].reverse().find((line) => line.speaker === "interviewer");
   const stageStatus = phase === "connecting" ? "connecting" : mode;
