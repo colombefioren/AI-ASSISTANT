@@ -35,6 +35,13 @@ describe("buildReport", () => {
     expect(report.strengths.some((s) => s.includes("concrete result"))).toBe(true);
   });
 
+  it("counts a bare percentage as an outcome", () => {
+    const answer =
+      "I took over the weekly reporting job that everyone on the analytics team dreaded, rewrote the queries one at a time, and moved the dashboard to a nightly build. Page loads ended up 40% faster.";
+    const report = buildReport([line("candidate", answer, 1)], 60);
+    expect(report.outcomeRate).toBe(1);
+  });
+
   it("flags answers that lean on we instead of I", () => {
     const answer =
       "We planned it together, we built the service, we tested our ideas, and we shipped our release when we felt our team was ready for it.";

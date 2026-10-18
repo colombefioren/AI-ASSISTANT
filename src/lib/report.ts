@@ -30,7 +30,8 @@ export interface SessionReport {
 const FILLERS = ["um", "uh", "erm", "like", "you know", "basically", "actually", "kind of", "sort of", "i mean", "literally"];
 const HEDGES = ["i think", "i guess", "maybe", "probably", "i'm not sure", "i don't know", "kind of", "sort of"];
 // Words and patterns that usually signal a result in a STAR-style answer.
-const OUTCOME = /\b(\d+(\.\d+)?\s?(%|percent|x|k|users|customers|hours|days|weeks|months)|result(ed)?|increas\w*|reduc\w*|improv\w*|sav(ed|ing)|grew|grow\w*|cut|launch\w*|deliver\w*|led to|so that|outcome|impact)\b/i;
+const OUTCOME =
+  /\d+(?:\.\d+)?\s?(?:%|(?:percent|x|k|users|customers|hours|days|weeks|months)\b)|\b(?:result(?:ed)?|increas\w*|reduc\w*|improv\w*|sav(?:ed|ing)|grew|grow\w*|cut|launch\w*|deliver\w*|led to|so that|outcome|impact)\b/i;
 const SUBSTANTIVE_WORDS = 25;
 
 const words = (text: string) => text.toLowerCase().match(/[a-z0-9'%]+/g) ?? [];
