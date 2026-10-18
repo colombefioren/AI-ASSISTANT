@@ -6,6 +6,10 @@ import prisma from "@/lib/db";
 import { clientIp, rateLimit, refundLimit } from "@/lib/rate-limit";
 import { signInSchema } from "@/lib/validation";
 
+// Compared against when the email is unknown so both paths cost one bcrypt
+// round and response time does not reveal which emails have accounts.
+const TIMING_EQUALIZER_HASH = "$2b$12$xS5oCZJX.FY5RY5D83nuCOzk34IM1AnaIit9F.IcfnlKx24sagh4q";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -45,7 +49,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        const isValid = user ? await bcrypt.compare(password, user.password) : false;
+        const isValid = await bcrypt.compare(password, user?.password ?? TIMING_EQUALIZER_HASH);
         if (!user || !isValid) return null;
 
         // The per-IP request budget stays spent; failure counters are refunded.
