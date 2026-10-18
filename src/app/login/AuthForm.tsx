@@ -1,16 +1,19 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
 import { fieldErrors, registerSchema, signInSchema } from "@/lib/validation";
 
 type Mode = "signin" | "register";
 type Errors = Partial<Record<"name" | "email" | "password" | "form", string>>;
+
+const ease = [0.16, 1, 0.3, 1] as const;
 
 export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; callbackUrl: string }) {
   const router = useRouter();
@@ -19,6 +22,7 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
   const [values, setValues] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const isRegister = mode === "register";
 
@@ -43,11 +47,10 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
             ? "Too many attempts. Wait a moment and try again."
             : "That email and password do not match an account.",
       });
-      return false;
+      return;
     }
     router.replace(callbackUrl);
     router.refresh();
-    return true;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -84,121 +87,147 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        {isRegister ? "Create your account" : "Welcome back"}
-      </h1>
-      <p className="mt-2 text-sm text-ink-muted">
-        {isRegister ? "Free to use. Your sessions stay private to you." : "Sign in to continue practicing."}
-      </p>
-
-      <div role="tablist" aria-label="Authentication mode" className="mt-8 grid grid-cols-2 rounded-full border bg-surface p-1">
-        {(["signin", "register"] as const).map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={mode === item}
-            onClick={() => switchMode(item)}
-            className={cn(
-              "h-9 rounded-full text-sm font-medium transition-colors",
-              mode === item ? "bg-surface-raised text-ink" : "text-ink-muted hover:text-ink"
-            )}
-          >
-            {item === "signin" ? "Sign in" : "Create account"}
-          </button>
-        ))}
-      </div>
-
-      <form onSubmit={handleSubmit} noValidate className="mt-6 grid gap-5">
-        <AnimatePresence initial={false}>
-          {isRegister && (
-            <motion.div
-              key="name"
-              initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden"
-            >
-              <Field
-                label="Full name"
-                autoComplete="name"
-                value={values.name}
-                onChange={update("name")}
-                error={errors.name}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <Field
-          label="Email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          value={values.email}
-          onChange={update("email")}
-          error={errors.email}
-        />
-        <Field
-          label="Password"
-          type="password"
-          autoComplete={isRegister ? "new-password" : "current-password"}
-          value={values.password}
-          onChange={update("password")}
-          error={errors.password}
-          hint={isRegister ? "At least 8 characters." : undefined}
-        />
-
-        {errors.form && (
-          <p role="alert" className="rounded-field border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {errors.form}
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease }}
+      className="relative w-full max-w-md"
+    >
+      {/* Soft halo behind the card. */}
+      <div aria-hidden className="absolute -inset-px rounded-[1.4rem] bg-gradient-to-b from-accent/40 via-white/5 to-transparent" />
+      <div className="relative rounded-[1.35rem] bg-surface/90 p-7 shadow-[0_40px_120px_-40px_rgb(var(--accent)/0.45)] backdrop-blur-xl sm:p-9">
+        <div className="flex flex-col items-center text-center">
+          <LogoMark className="size-12" />
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight sm:text-[1.7rem]">
+            {isRegister ? "Create your account" : "Welcome back"}
+          </h1>
+          <p className="mt-2 max-w-[34ch] text-sm leading-relaxed text-ink-muted">
+            Your personal AI interviewer that helps you practice, improve and{" "}
+            <span className="font-medium text-accent">land your dream job</span>.
           </p>
-        )}
+        </div>
 
-        <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
-          {pending && <Loader2 className="animate-spin" aria-hidden />}
-          {isRegister ? "Create account" : "Sign in"}
-        </Button>
-      </form>
-    </div>
+        <form onSubmit={handleSubmit} noValidate className="mt-8 grid gap-4">
+          <AnimatePresence initial={false}>
+            {isRegister && (
+              <motion.div
+                key="name"
+                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease }}
+                className="overflow-hidden"
+              >
+                <Field
+                  label="Full name"
+                  icon={User}
+                  autoComplete="name"
+                  placeholder="Ada Lovelace"
+                  value={values.name}
+                  onChange={update("name")}
+                  error={errors.name}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <Field
+            label="Email"
+            icon={Mail}
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@example.com"
+            value={values.email}
+            onChange={update("email")}
+            error={errors.email}
+          />
+          <Field
+            label="Password"
+            icon={Lock}
+            type={showPassword ? "text" : "password"}
+            autoComplete={isRegister ? "new-password" : "current-password"}
+            placeholder={isRegister ? "At least 8 characters" : "Your password"}
+            value={values.password}
+            onChange={update("password")}
+            error={errors.password}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowPassword((show) => !show)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="grid size-8 place-items-center rounded-full text-ink-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            }
+          />
+
+          {errors.form && (
+            <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-rose-200">
+              {errors.form}
+            </p>
+          )}
+
+          <Button type="submit" size="lg" disabled={pending} className="group mt-2 w-full">
+            {pending ? <Loader2 className="animate-spin" aria-hidden /> : null}
+            {pending ? (isRegister ? "Creating account" : "Signing in") : isRegister ? "Create account" : "Sign in"}
+            {!pending && <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden />}
+          </Button>
+        </form>
+
+        <p className="mt-7 text-center text-sm text-ink-muted">
+          {isRegister ? "Already have an account?" : "New to Greenroom?"}{" "}
+          <button
+            type="button"
+            onClick={() => switchMode(isRegister ? "signin" : "register")}
+            className="font-medium text-accent underline-offset-4 transition-colors hover:text-sky-300 hover:underline"
+          >
+            {isRegister ? "Sign in" : "Create an account"}
+          </button>
+        </p>
+      </div>
+    </motion.div>
   );
 }
 
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
+  icon: ComponentType<{ className?: string }>;
   error?: string;
-  hint?: string;
+  trailing?: React.ReactNode;
 };
 
-function Field({ label, error, hint, className, ...props }: FieldProps) {
+function Field({ label, icon: Icon, error, trailing, className, ...props }: FieldProps) {
   const id = useId();
-  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div className="grid gap-2">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="text-sm font-medium text-slate-200">
         {label}
       </label>
-      <input
-        id={id}
-        aria-invalid={Boolean(error)}
-        aria-describedby={describedBy}
+      <div
         className={cn(
-          "h-11 rounded-field border bg-surface px-4 text-[15px] text-ink outline-none transition-colors placeholder:text-ink-muted focus:border-accent focus-visible:outline-none focus:ring-2 focus:ring-accent/25",
-          error && "border-danger focus:border-danger focus:ring-danger/25",
-          className
+          "group flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-canvas/60 pl-4 pr-2 transition-[border-color,box-shadow] focus-within:border-accent/70 focus-within:shadow-[0_0_0_4px_rgb(var(--accent)/0.15)]",
+          error && "border-danger/70 focus-within:border-danger focus-within:shadow-[0_0_0_4px_rgb(var(--danger)/0.15)]"
         )}
-        {...props}
-      />
-      {error ? (
-        <p id={`${id}-error`} className="text-sm text-danger">
+      >
+        <Icon className={cn("size-4 shrink-0 text-ink-muted transition-colors group-focus-within:text-accent", error && "text-danger")} />
+        <input
+          id={id}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn(
+            "h-full min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-[#7b8aa3] focus-visible:outline-none",
+            className
+          )}
+          {...props}
+        />
+        {trailing}
+      </div>
+      {error && (
+        <p id={`${id}-error`} className="text-sm text-rose-300">
           {error}
         </p>
-      ) : hint ? (
-        <p id={`${id}-hint`} className="text-sm text-ink-muted">
-          {hint}
-        </p>
-      ) : null}
+      )}
     </div>
   );
 }

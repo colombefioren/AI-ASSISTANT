@@ -73,3 +73,23 @@
   opacity: 0;
   transform: translateY(24px);
 }
+
+/* Drifting background particles (Backdrop). */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  33% {
+    transform: translate3d(18px, -26px, 0);
+  }
+  66% {
+    transform: translate3d(-14px, 14px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .particle {
+    animation: drift linear infinite;
+  }
+}
