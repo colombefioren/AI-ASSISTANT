@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Backdrop } from "@/components/ui/Backdrop";
 import { getSession } from "@/lib/auth";
 import { AuthForm } from "./AuthForm";
 
@@ -32,7 +31,6 @@ export default async function LoginPage({
 
   return (
     <main className="relative flex min-h-[100dvh] flex-col items-center px-4 py-6 sm:py-10">
-      <Backdrop />
       <div className="flex w-full max-w-md items-center justify-between">
         <Link
           href="/"

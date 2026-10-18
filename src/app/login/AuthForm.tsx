@@ -93,9 +93,7 @@ export function AuthForm({ initialMode, callbackUrl }: { initialMode: Mode; call
       transition={{ duration: 0.6, ease }}
       className="relative w-full max-w-md"
     >
-      {/* Soft halo behind the card. */}
-      <div aria-hidden className="absolute -inset-px rounded-[1.4rem] bg-gradient-to-b from-accent/40 via-white/5 to-transparent" />
-      <div className="relative rounded-[1.35rem] bg-surface/90 p-7 shadow-[0_40px_120px_-40px_rgb(var(--accent)/0.45)] backdrop-blur-xl sm:p-9">
+      <div className="rounded-2xl border border-white/[0.08] bg-surface p-7 sm:p-9">
         <div className="flex flex-col items-center text-center">
           <LogoMark className="size-12" />
           <h1 className="mt-5 text-2xl font-semibold tracking-tight sm:text-[1.7rem]">
@@ -206,8 +204,8 @@ function Field({ label, icon: Icon, error, trailing, className, ...props }: Fiel
       </label>
       <div
         className={cn(
-          "group flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-canvas/60 pl-4 pr-2 transition-[border-color,box-shadow] focus-within:border-accent/70 focus-within:shadow-[0_0_0_4px_rgb(var(--accent)/0.15)]",
-          error && "border-danger/70 focus-within:border-danger focus-within:shadow-[0_0_0_4px_rgb(var(--danger)/0.15)]"
+          "group flex h-12 items-center gap-3 rounded-xl border border-white/10 bg-canvas/60 pl-4 pr-2 transition-colors focus-within:border-accent/70",
+          error && "border-danger/70 focus-within:border-danger"
         )}
       >
         <Icon className={cn("size-4 shrink-0 text-ink-muted transition-colors group-focus-within:text-accent", error && "text-danger")} />
