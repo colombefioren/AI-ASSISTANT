@@ -1,11 +1,12 @@
-# Greenroom
+# AIC: AI Interview Coach
 
-Rehearse the interview before it counts. Greenroom is a mock-interview app where you
-answer out loud to a 3D interviewer, then review a transcript-based report of how you did.
+Ace your next interview with AI coaching. AI Interview Coach (AIC) is a mock-interview app
+where you answer out loud to a 3D interviewer, then review a transcript-based report of
+how you did.
 
 ## Features
 
-- **Voice interviews** with two interviewers, Coco and Mimi, powered by
+- **Voice interviews** with two interviewers, Ms. Coco and Mr. Mimi, powered by
   [ElevenLabs Conversational AI](https://elevenlabs.io/conversational-ai).
 - **Natural 3D avatars** rendered with Three.js. Lip sync is driven by the interviewer's
   real audio spectrum (formant and sibilance analysis mapped to visemes), with blinking,
@@ -16,7 +17,7 @@ answer out loud to a 3D interviewer, then review a transcript-based report of ho
   outcome-focused answers and ownership ("I" versus "we"), with concrete suggestions.
 - **Session history** per account, each session with its own report page.
 - **Accounts** with email and password (NextAuth credentials, bcrypt, rate limiting).
-- Light and dark themes that follow your system setting, reduced-motion support.
+- Dark slate and sky-blue interface, responsive layouts and reduced-motion support.
 
 ## Tech stack
 
@@ -28,8 +29,8 @@ Three.js with React Three Fiber · NextAuth · Prisma with PostgreSQL · Zod · 
 Requirements: Node.js 20 or newer and a PostgreSQL database.
 
 ```sh
-git clone https://github.com/colombefioren/AI-ASSISTANT.git greenroom
-cd greenroom
+git clone https://github.com/colombefioren/AI-ASSISTANT.git
+cd AI-ASSISTANT
 npm install
 cp .env.example .env.local   # then fill in the values
 npm run db:migrate           # creates the tables
@@ -48,12 +49,12 @@ for microphone access when the interview starts.
 | `NEXTAUTH_SECRET` | yes | Random secret for signing sessions (`openssl rand -base64 32`). |
 | `ELEVENLABS_API_KEY` | no | Enables private agents through signed URLs. |
 | `ELEVENLABS_AGENT_ID_COCO`, `ELEVENLABS_AGENT_ID_MIMI` | no | Agent ids for each interviewer. Default to the project's public agents. |
-| `ELEVENLABS_ALLOW_OVERRIDES` | no | `true` sends Greenroom's English interviewer prompt and first message. Requires Overrides to be enabled in the agent's Security settings. |
+| `ELEVENLABS_ALLOW_OVERRIDES` | no | `true` sends the app's English interviewer prompt and first message. Requires Overrides to be enabled in the agent's Security settings. |
 | `TRUST_PROXY` | no | `true` when a proxy you control sets `X-Forwarded-For`. |
 
 ### Interview language
 
-The interviewer's language comes from the ElevenLabs agent configuration. Greenroom asks
+The interviewer's language comes from the ElevenLabs agent configuration. The app asks
 every agent to continue in English, but the agent's first message is fixed in its
 dashboard. For a fully English interview, either set the agent's language and first
 message to English in ElevenLabs, or enable Overrides on the agent and set
@@ -89,5 +90,5 @@ public/avatars/        avatar models and their licenses (see CREDITS.md)
 - Rate limiting is kept in process memory. It works for a single server; use Redis or
   a similar shared store when running several instances.
 - The avatars are licensed for non-commercial use only. See
-  [`public/avatars/CREDITS.md`](public/avatars/CREDITS.md) before using Greenroom
-  commercially.
+  [`public/avatars/CREDITS.md`](public/avatars/CREDITS.md) before using AI Interview
+  Coach commercially.
