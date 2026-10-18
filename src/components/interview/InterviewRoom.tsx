@@ -7,7 +7,8 @@ import Link from "next/link";
 import { ArrowLeft, FileText, Loader2, LogOut, Mic, MicOff, PhoneOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
-import { ENGLISH_ONLY_CONTEXT } from "@/lib/interview-script";
+import { languageContext } from "@/lib/interview-script";
+import { DEFAULT_LANGUAGE, isInterviewLanguage, type InterviewLanguage } from "@/lib/languages";
 import { interviewers, type InterviewerId } from "@/lib/interviewers";
 import { cn } from "@/lib/utils";
 import type { SessionReport } from "@/lib/report";
@@ -15,12 +16,15 @@ import type { SessionSummary } from "@/lib/sessions";
 import { AvatarStage } from "./AvatarStage";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { InterviewerToggle } from "./InterviewerToggle";
+import { LanguageToggle } from "./LanguageToggle";
 import { SessionHistory } from "./SessionHistory";
 import { Transcript } from "./Transcript";
 import type { AudioBridge } from "./avatar/types";
 import type { TranscriptLine } from "./types";
 
 type Phase = "ready" | "connecting" | "live" | "ended";
+
+const LANGUAGE_KEY = "aic.interview-language";
 
 interface RoomProps {
   userName: string;
@@ -43,6 +47,7 @@ export type SaveState = {
 
 function Room({ userName, initialHistory }: RoomProps) {
   const [interviewerId, setInterviewerId] = useState<InterviewerId>("coco");
+  const [language, setLanguage] = useState<InterviewLanguage>(DEFAULT_LANGUAGE);
   const [phase, setPhase] = useState<Phase>("ready");
   const [error, setError] = useState<string | null>(null);
   const [lines, setLines] = useState<TranscriptLine[]>([]);
@@ -57,6 +62,7 @@ function Room({ userName, initialHistory }: RoomProps) {
   // Interviewer of the session in progress, so switching after it ends
   // cannot relabel or re-save it.
   const sessionInterviewer = useRef<InterviewerId>(interviewerId);
+  const sessionLanguage = useRef<InterviewLanguage>(language);
   const savedSession = useRef(false);
   linesRef.current = lines;
 
@@ -69,7 +75,7 @@ function Room({ userName, initialHistory }: RoomProps) {
     onConnect: () => {
       startedAt.current = Date.now();
       setPhase("live");
-      conversation.sendContextualUpdate(ENGLISH_ONLY_CONTEXT);
+      conversation.sendContextualUpdate(languageContext[sessionLanguage.current]);
     },
     onDisconnect: (details) => {
       endedAt.current = Date.now();
@@ -137,6 +143,7 @@ function Room({ userName, initialHistory }: RoomProps) {
     hasSpeech.current = false;
     savedSession.current = false;
     sessionInterviewer.current = interviewerId;
+    sessionLanguage.current = language;
     setSaveState({ status: "idle" });
     setFeedbackOpen(false);
     setPhase("connecting");
@@ -151,7 +158,8 @@ function Room({ userName, initialHistory }: RoomProps) {
     }
 
     try {
-      const response = await fetch(`/api/conversation?interviewer=${interviewerId}`, { cache: "no-store" });
+      const query = new URLSearchParams({ interviewer: interviewerId, language });
+      const response = await fetch(`/api/conversation?${query}`, { cache: "no-store" });
       const credentials = await response.json();
       if (!response.ok) throw new Error(credentials.error ?? "Could not reach the interviewer.");
       conversation.startSession({ ...credentials, connectionType: "websocket" });
@@ -159,7 +167,7 @@ function Room({ userName, initialHistory }: RoomProps) {
       setError(cause instanceof Error ? cause.message : "Could not reach the interviewer.");
       setPhase("ready");
     }
-  }, [conversation, interviewerId]);
+  }, [conversation, interviewerId, language]);
 
   const saveSession = useCallback(async () => {
     const sessionId = sessionInterviewer.current;
@@ -205,6 +213,25 @@ function Room({ userName, initialHistory }: RoomProps) {
   }, [phase, saveSession]);
 
   const toggleSpeaker = () => setSpeakerMuted((muted) => !muted);
+
+  // The chosen language sticks until the candidate changes it.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LANGUAGE_KEY);
+      if (isInterviewLanguage(stored)) setLanguage(stored);
+    } catch {
+      // Storage can be unavailable (private mode); the default still works.
+    }
+  }, []);
+
+  const chooseLanguage = (next: InterviewLanguage) => {
+    setLanguage(next);
+    try {
+      localStorage.setItem(LANGUAGE_KEY, next);
+    } catch {
+      // Ignore: the choice still applies to this visit.
+    }
+  };
 
   const busy = phase === "connecting" || connected;
   const statusText =
@@ -273,6 +300,8 @@ function Room({ userName, initialHistory }: RoomProps) {
                 </Button>
               </div>
             </div>
+
+            <LanguageToggle value={language} onChange={chooseLanguage} disabled={busy} />
 
             <p className="flex items-center gap-2 text-sm" aria-live="polite">
               <span

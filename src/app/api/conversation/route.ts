@@ -3,7 +3,8 @@ import { getConversationCredentials } from "@/lib/agents";
 import { getSession } from "@/lib/auth";
 import { interviewers, isInterviewerId } from "@/lib/interviewers";
 import { rateLimit } from "@/lib/rate-limit";
-import { englishOverrides } from "@/lib/interview-script";
+import { sessionOverrides } from "@/lib/interview-script";
+import { isInterviewLanguage } from "@/lib/languages";
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -20,17 +21,23 @@ export async function GET(req: Request) {
     );
   }
 
-  const interviewer = new URL(req.url).searchParams.get("interviewer");
+  const params = new URL(req.url).searchParams;
+  const interviewer = params.get("interviewer");
+  const language = params.get("language");
   if (!isInterviewerId(interviewer)) {
     return NextResponse.json({ error: "Unknown interviewer." }, { status: 400 });
+  }
+  if (!isInterviewLanguage(language)) {
+    return NextResponse.json({ error: "Unsupported interview language." }, { status: 400 });
   }
 
   try {
     const credentials = await getConversationCredentials(interviewer);
-    const overrides =
+    const overrides = sessionOverrides(
+      interviewers[interviewer].name,
+      language,
       process.env.ELEVENLABS_ALLOW_OVERRIDES === "true"
-        ? englishOverrides(interviewers[interviewer].name)
-        : undefined;
+    );
     return NextResponse.json({ ...credentials, overrides }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Could not create conversation credentials", error);
