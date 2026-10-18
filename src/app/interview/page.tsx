@@ -1,44 +1,17 @@
-"use client";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { InterviewRoom } from "@/components/interview/InterviewRoom";
+import { getSession } from "@/lib/auth";
 
-import BackButton from "@/components/ui/BackButton";
-import MessageBubble from "@/components/ui/MessageBubble";
-import Toggle from "@/components/ui/Toggle";
-import VoiceComponent from "@/components/VoiceComponent";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+export const metadata: Metadata = {
+  title: "Interview room",
+};
 
-export default function Home() {
-  const router = useRouter();
-  const goBack = () => router.push("/");
-  const [isMale, setIsMale] = useState(true);
-  const [showBubble, setShowBubble] = useState(false);
-  const [hasShown, setHasShown] = useState(false);
+export default async function InterviewPage() {
+  // Middleware already guards this route; checking again here keeps the page
+  // safe even if the matcher changes.
+  const session = await getSession();
+  if (!session) redirect("/login?callbackUrl=/interview");
 
-  useEffect(() => {
-    if (!hasShown) {
-      const showTimer = setTimeout(() => {
-        setShowBubble(true);
-      }, 1500);
-
-      const hideTimer = setTimeout(() => {
-        setShowBubble(false);
-        setHasShown(true);
-      }, 8000);
-
-      return () => {
-        clearTimeout(showTimer);
-        clearTimeout(hideTimer);
-      };
-    }
-  }, [hasShown]);
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <MessageBubble show={showBubble} />
-      <BackButton goBack={goBack} />
-      <Toggle setIsMale={setIsMale} />
-
-      <VoiceComponent gender={isMale} />
-    </main>
-  );
+  return <InterviewRoom userName={session.user.name ?? "Candidate"} />;
 }

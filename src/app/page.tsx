@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ParticleBackground from "@/components/ParticleBackground";
-import VoiceComponent from "@/components/VoiceComponent";
 
 // Navbar Component
 const Navbar = () => {
