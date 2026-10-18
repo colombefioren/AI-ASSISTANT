@@ -34,7 +34,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Opt into scroll reveals before first paint, unless motion is reduced. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("js-reveal")`,
+          }}
+        />
+      </head>
       <body className="min-h-[100dvh] font-sans">{children}</body>
     </html>
   );

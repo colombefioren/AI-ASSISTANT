@@ -70,3 +70,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Scroll reveal initial states, applied only once ScrollReveal can run. */
+.js-reveal [data-reveal="fade"],
+.js-reveal [data-reveal="slide-up"] {
+  opacity: 0;
+}
+
+.js-reveal [data-reveal="stagger"] > * {
+  opacity: 0;
+  transform: translateY(24px);
+}

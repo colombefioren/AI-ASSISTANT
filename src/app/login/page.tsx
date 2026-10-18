@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { getSession } from "@/lib/auth";
@@ -37,8 +38,17 @@ export default async function LoginPage({
           </div>
         </div>
       </section>
-      <aside className="relative hidden overflow-hidden border-l bg-surface-raised lg:block">
-        <div className="absolute inset-x-12 bottom-12 max-w-md">
+      <aside className="relative hidden overflow-hidden border-l bg-surface-raised bg-[radial-gradient(80%_60%_at_70%_100%,rgb(var(--accent)/0.2),transparent_70%)] lg:block">
+        <Image
+          src="/images/portrait-mimi.webp"
+          alt=""
+          width={880}
+          height={1202}
+          priority
+          sizes="40vw"
+          className="absolute -right-10 bottom-0 h-[78%] w-auto object-contain object-bottom"
+        />
+        <div className="absolute left-12 top-16 max-w-sm">
           <p className="text-2xl font-medium leading-snug tracking-tight text-ink">
             Say your answers out loud before the real thing. You will hear what works.
           </p>

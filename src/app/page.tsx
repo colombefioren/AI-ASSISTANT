@@ -1,378 +1,252 @@
-"use client";
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Mic,
-  UserCheck,
-  BarChart2,
-  Sparkles,
-  Linkedin,
-  Twitter,
-  Github,
-} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import ParticleBackground from "@/components/ParticleBackground";
+import { ArrowRight } from "lucide-react";
+import { ReportView } from "@/components/interview/ReportView";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
+import { ThemedImage } from "@/components/landing/ThemedImage";
+import { Logo } from "@/components/ui/Logo";
+import { buttonVariants } from "@/components/ui/button";
+import { brand } from "@/lib/brand";
+import { interviewerIds, interviewers } from "@/lib/interviewers";
+import { buildReport } from "@/lib/report";
+import { sampleTranscript } from "@/lib/sample-session";
 
-// Navbar Component
-const Navbar = () => {
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] bg-slate-900/80 backdrop-blur-md border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-sky-400" />
-          <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">
-            AI Interview Coach
-          </span>
-        </div>
-        <div className="hidden md:flex items-center space-x-6">
-          <Link
-            href="#features"
-            className="text-white hover:text-sky-400 transition-colors"
-          >
-            Features
-          </Link>
-          <Link
-            href="#demo"
-            className="text-white hover:text-sky-400 transition-colors"
-          >
-            Demo
-          </Link>
-          <Link
-            href="#pricing"
-            className="text-white hover:text-sky-400 transition-colors"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/login"
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 transition-all flex items-center space-x-1"
-          >
-            <span>Get Started</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </nav>
-  );
-};
+const START_HREF = "/login?mode=register";
+const START_LABEL = "Start practicing";
 
-// Hero Section Component
-const HeroSection = () => {
-  return (
-    <div className="w-full max-w-7xl mx-auto pt-24 pb-12 lg:pt-32 lg:pb-16 px-4 sm:px-6 relative z-10">
-      <div className="text-center max-w-4xl mx-auto">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white motion-safe:animate-fade-in relative z-20"
-        >
-          Ace Your Next Interview with
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">
-            {" "}
-            AI Coaching
-          </span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mt-6 text-lg sm:text-xl text-white max-w-3xl mx-auto motion-safe:animate-fade-in relative z-20"
-        >
-          Practice with realistic AI interviewers, receive instant feedback,
-          and gain the confidence to land your dream job.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4 motion-safe:animate-fade-in relative z-20"
-        >
-          <Link
-            href="/login"
-            className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 transition-all flex items-center justify-center space-x-2 text-lg font-medium shadow-lg hover:shadow-sky-500/30"
-          >
-            <span>Start Practicing</span>
-            <ArrowRight className="h-5 w-5" />
-          </Link>
-          <Link
-            href="#features"
-            className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all text-lg font-medium border border-white/10 backdrop-blur-sm"
-          >
-            Learn More
-          </Link>
-        </motion.div>
-      </div>
-    </div>
-  );
-};
+const steps = [
+  {
+    verb: "Choose",
+    body: "Pick Coco or Mimi. Both run a first-round interview that mixes behavioral and role-specific questions.",
+  },
+  {
+    verb: "Talk",
+    body: "Answer out loud through your microphone. The interviewer reacts, asks follow-ups and waits for you to finish.",
+  },
+  {
+    verb: "Review",
+    body: "End the session to get your full transcript and a report on answer length, filler words, outcomes and ownership.",
+  },
+];
 
-// Features Section Component
-const FeaturesSection = () => {
-  const features = [
-    {
-      icon: <Mic className="h-6 w-6 text-sky-400" />,
-      title: "Real-time Voice Interaction",
-      description: "Practice with AI interviewers that respond naturally to your voice, creating a realistic interview experience.",
-    },
-    {
-      icon: <BarChart2 className="h-6 w-6 text-sky-400" />,
-      title: "Performance Analytics",
-      description: "Get detailed insights into your interview performance with comprehensive analytics and feedback.",
-    },
-    {
-      icon: <Sparkles className="h-6 w-6 text-sky-400" />,
-      title: "AI-Powered Feedback",
-      description: "Receive instant, personalized feedback on your responses to help you improve your interview skills.",
-    },
-  ];
+const sampleReport = buildReport(sampleTranscript, 615);
 
-  return (
-    <div id="features" className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20 relative z-10">
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-        className="text-center mb-12 motion-safe:animate-fade-in relative z-20"
-      >
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Key Features</h2>
-        <p className="text-white text-lg max-w-2xl mx-auto">
-          Everything you need to master your interview skills and land your dream job
-        </p>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-        className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3 relative z-20"
-      >
-        {features.map((feature, index) => (
-          <motion.div
-            key={index}
-            whileHover={{ y: -5 }}
-            className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8 backdrop-blur-sm hover:bg-white/10 transition-colors motion-safe:animate-fade-in"
-          >
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="p-3 rounded-lg bg-white/10">
-                {feature.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-white">
-                {feature.title}
-              </h3>
-            </div>
-            <p className="text-white text-base">{feature.description}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  );
-};
-
-// Demo Preview Section Component
-const DemoPreviewSection = () => {
-  return (
-    <div id="demo" className="w-full bg-gradient-to-r from-slate-800/70 to-slate-900/70 py-20 mt-8 border-t border-b border-white/5 relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col lg:flex-row items-center gap-12">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="lg:w-1/2 relative z-20"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Try Our AI Interview <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">Simulator</span>
-            </h2>
-            <p className="text-white text-lg mb-8">
-              Experience realistic interview scenarios with our AI-powered coach. Get instant feedback on your responses and improve your interview skills in real-time.
-            </p>
-            <ul className="space-y-4 mb-8">
-              {[
-                "Practice common interview questions",
-                "Receive instant feedback on your responses",
-                "Track your progress over time",
-                "Customize interviews for specific roles"
-              ].map((item, index) => (
-                <li key={index} className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-sky-500/20 flex items-center justify-center mt-0.5">
-                    <ArrowRight className="h-3 w-3 text-sky-400" />
-                  </div>
-                  <span className="ml-3 text-white">{item}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/login"
-              className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 transition-all font-medium shadow-lg hover:shadow-sky-500/30"
-            >
-              Start Your Demo Now
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Link>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="lg:w-1/2 relative z-20"
-          >
-            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900/50 backdrop-blur-sm">
-              <div className="bg-slate-800/80 p-4 backdrop-blur-sm border-b border-white/10">
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <div className="ml-4 px-2 py-0.5 text-xs text-white border border-slate-700 rounded bg-slate-800/90">AI Interview Session</div>
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 sm:p-8">
-                <div className="flex flex-col h-64 md:h-80">
-                  <div className="bg-slate-800/50 p-4 rounded-lg mb-4 border border-slate-700/50">
-                    <div className="flex items-center mb-3">
-                      <div className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center mr-3">
-                        <Sparkles className="h-4 w-4 text-sky-400" />
-                      </div>
-                      <span className="font-medium text-white">AI Interviewer</span>
-                    </div>
-                    <p className="text-white">Tell me about a time when you had to solve a complex problem. What was your approach?</p>
-                  </div>
-                  <div className="bg-white/5 p-4 rounded-lg border border-white/10">
-                    <div className="flex items-center mb-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center mr-3">
-                        <UserCheck className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-medium text-white">You</span>
-                    </div>
-                    <div className="flex items-center text-white animate-pulse">
-                      <span className="h-3 w-3 bg-sky-400 rounded-full mr-2"></span>
-                      <span>Recording response...</span>
-                    </div>
-                  </div>
-                  <div className="mt-auto flex justify-center pt-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                        <Mic className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="px-4 py-2 rounded-full bg-white/10 text-white text-sm border border-white/10">
-                        Press Space to pause
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Footer Component
-const Footer = () => {
-  return (
-    <footer className="w-full bg-slate-900/50 border-t border-white/10 py-12 relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <Sparkles className="h-6 w-6 text-sky-400" />
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">
-                AI Interview Coach
-              </span>
-            </div>
-            <p className="text-white">
-              Empowering job seekers with AI-powered interview practice.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-white font-semibold mb-4">Product</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="#features" className="text-white hover:text-sky-400 transition-colors">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="#pricing" className="text-white hover:text-sky-400 transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="text-white hover:text-sky-400 transition-colors">
-                  Get Started
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="#" className="text-white hover:text-sky-400 transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-white hover:text-sky-400 transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-white hover:text-sky-400 transition-colors">
-                  Careers
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-white font-semibold mb-4">Connect</h3>
-            <div className="flex space-x-4">
-              <Link
-                href="#"
-                className="text-white hover:text-sky-400 transition-colors"
-              >
-                <Linkedin className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-white hover:text-sky-400 transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-white hover:text-sky-400 transition-colors"
-              >
-                <Github className="h-5 w-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="mt-8 pt-8 border-t border-white/10 text-center text-white">
-          <p>&copy; {new Date().getFullYear()} AI Interview Coach. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
-// Main Landing Page Component
 export default function LandingPage() {
   return (
-    <main className="relative min-h-screen">
-      <ParticleBackground />
-      <div className="relative z-20">
-        <Navbar />
-        <HeroSection />
-        <FeaturesSection />
-        <DemoPreviewSection />
-        <Footer />
+    <>
+      <ScrollReveal />
+      <SiteNav />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <Interviewers />
+        <RoomPreview />
+        <ReportPreview />
+        <FinalCta />
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
+
+function SiteNav() {
+  return (
+    <header className="sticky top-0 z-30 border-b bg-canvas/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+        <Logo />
+        <nav aria-label="Main" className="hidden items-center gap-8 text-sm text-ink-muted md:flex">
+          <a href="#how-it-works" className="transition-colors hover:text-ink">
+            How it works
+          </a>
+          <a href="#interviewers" className="transition-colors hover:text-ink">
+            Interviewers
+          </a>
+          <a href="#report" className="transition-colors hover:text-ink">
+            Report
+          </a>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            Sign in
+          </Link>
+          <Link href={START_HREF} className={buttonVariants({ size: "sm", className: "hidden sm:inline-flex" })}>
+            {START_LABEL}
+          </Link>
+        </div>
       </div>
-    </main>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 md:pt-16 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16 lg:py-12">
+      <div data-reveal="stagger" className="max-w-2xl">
+        <h1 className="text-4xl font-semibold leading-[1.05] tracking-tighter md:text-5xl lg:text-[3.6rem]">
+          {brand.tagline}
+        </h1>
+        <p className="mt-6 max-w-[46ch] text-lg leading-relaxed text-ink-muted">
+          Answer out loud to a 3D interviewer that follows up, then read a report built from your own words.
+        </p>
+        <div className="mt-9 flex flex-wrap gap-3">
+          <Link href={START_HREF} className={buttonVariants({ size: "lg" })}>
+            {START_LABEL}
+            <ArrowRight aria-hidden />
+          </Link>
+          <a href="#how-it-works" className={buttonVariants({ variant: "secondary", size: "lg" })}>
+            How it works
+          </a>
+        </div>
+      </div>
+
+      <div data-reveal="fade" className="relative mx-auto w-full max-w-md lg:max-w-none">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-panel border bg-[radial-gradient(90%_70%_at_50%_100%,rgb(var(--accent)/0.22),transparent_70%)] bg-surface-raised">
+          <Image
+            src="/images/portrait-coco.webp"
+            alt="Coco, one of the Greenroom interviewers, a 3D character with dark hair and glasses"
+            width={880}
+            height={1416}
+            priority
+            sizes="(min-width: 1024px) 45vw, 90vw"
+            className="absolute inset-x-0 bottom-0 mx-auto h-[94%] w-auto object-contain object-bottom"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section id="how-it-works" className="scroll-mt-16 border-t">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 data-reveal="slide-up" className="text-3xl font-semibold tracking-tight md:text-4xl">
+            How a session works
+          </h2>
+        </div>
+        <ol data-reveal="stagger" className="grid">
+          {steps.map((step) => (
+            <li key={step.verb} className="grid gap-3 border-t py-8 first:border-t-0 first:pt-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-8">
+              <h3 className="text-2xl font-semibold tracking-tight text-accent">{step.verb}</h3>
+              <p className="max-w-[52ch] text-lg leading-relaxed text-ink-muted">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function Interviewers() {
+  const portraits = { coco: { width: 880, height: 1416 }, mimi: { width: 880, height: 1202 } } as const;
+  return (
+    <section id="interviewers" className="scroll-mt-16 bg-surface">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28">
+        <h2 data-reveal="slide-up" className="max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+          Two interviewers who look at you while you answer
+        </h2>
+        <p data-reveal="slide-up" className="mt-4 max-w-[60ch] text-lg leading-relaxed text-ink-muted">
+          Their lips follow the actual voice audio. They blink, hold eye contact and nod while you talk.
+        </p>
+        <div data-reveal="stagger" className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8">
+          {interviewerIds.map((id, index) => (
+            <figure key={id} className={index === 1 ? "md:mt-16" : undefined}>
+              <div className="relative aspect-[5/4] overflow-hidden rounded-panel border bg-canvas">
+                <Image
+                  src={`/images/portrait-${id}.webp`}
+                  alt={`${interviewers[id].name}, a 3D interviewer`}
+                  width={portraits[id].width}
+                  height={portraits[id].height}
+                  sizes="(min-width: 768px) 45vw, 90vw"
+                  className="absolute inset-x-0 top-[8%] mx-auto w-[58%]"
+                />
+              </div>
+              <figcaption className="mt-4">
+                <span className="block text-lg font-semibold">{interviewers[id].name}</span>
+                <span className="block text-ink-muted">{interviewers[id].summary}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RoomPreview() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28">
+      <div className="max-w-2xl">
+        <h2 data-reveal="slide-up" className="text-3xl font-semibold tracking-tight md:text-4xl">
+          Set up like a video call
+        </h2>
+        <p data-reveal="slide-up" className="mt-4 text-lg leading-relaxed text-ink-muted">
+          Captions under the interviewer, a live transcript beside them, and your past sessions one click away.
+        </p>
+      </div>
+      <div data-reveal="fade" className="mt-12 overflow-hidden rounded-panel border shadow-[0_30px_80px_-40px_rgb(var(--ink)/0.35)]">
+        <ThemedImage
+          light="/images/room-light.webp"
+          dark="/images/room-dark.webp"
+          alt="The Greenroom interview room with Coco on the left and the interviewer picker, controls and past sessions on the right"
+          width={1800}
+          height={1125}
+          sizes="(min-width: 1280px) 1232px, 100vw"
+          className="h-auto w-full"
+        />
+      </div>
+    </section>
+  );
+}
+
+function ReportPreview() {
+  return (
+    <section id="report" className="scroll-mt-16 border-t">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-20">
+        <div data-reveal="slide-up">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Feedback you can act on tomorrow</h2>
+          <p className="mt-4 max-w-[48ch] text-lg leading-relaxed text-ink-muted">
+            The report reads your transcript and points at specific habits, with the numbers behind each one.
+          </p>
+        </div>
+        <div data-reveal="fade" className="rounded-panel border bg-surface p-6 sm:p-8">
+          <p className="mb-6 text-sm text-ink-muted">Sample report from a three-question practice session</p>
+          <ReportView report={sampleReport} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCta() {
+  return (
+    <section className="border-t bg-surface">
+      <div data-reveal="slide-up" className="mx-auto flex max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6">
+        <h2 className="text-balance text-3xl font-semibold tracking-tight md:text-5xl">
+          Practice tonight. Walk in calmer tomorrow.
+        </h2>
+        <Link href={START_HREF} className={buttonVariants({ size: "lg", className: "mt-9" })}>
+          {START_LABEL}
+          <ArrowRight aria-hidden />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="border-t">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 text-sm text-ink-muted sm:px-6 md:grid-cols-[1fr_auto] md:items-end">
+        <div className="grid gap-3">
+          <Logo />
+          <p className="max-w-[60ch]">
+            Voice conversations by ElevenLabs. Avatars from the TalkingHead examples, licensed for non-commercial use.
+          </p>
+        </div>
+        <p>&copy; {new Date().getFullYear()} {brand.name}</p>
+      </div>
+    </footer>
   );
 }
