@@ -49,6 +49,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .group:hover .group-hover\:-rotate-6 {
+    transform: none;
+  }
+
   *,
   *::before,
   *::after {
