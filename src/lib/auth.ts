@@ -1,7 +1,10 @@
 import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { signInSchema } from "@/lib/validation";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,15 +14,18 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+      async authorize(credentials, req) {
+        const parsed = signInSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+        const { email, password } = parsed.data;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
-        });
+        const limit = rateLimit(`signin:${clientIp(req.headers ?? {})}:${email}`, 8, 15 * 60 * 1000);
+        if (!limit.ok) throw new Error("RateLimited");
+
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
 
         return { id: user.id.toString(), name: user.name, email: user.email };
@@ -27,7 +33,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 14 },
   pages: { signIn: "/login" },
   callbacks: {
     async jwt({ token, user }) {
@@ -40,3 +46,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+export function getSession() {
+  return getServerSession(authOptions);
+}
